@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F2EADC">
+<title>Suivi cheval</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Suivi cheval">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐴</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<style>
+
+:root{
+  --bg:#F2EADC; --surface:#FBF7EF; --ink:#2E241B; --muted:#76685A; --line:#E0D4C0;
+  --bar:#D9C7A7; --bar-ink:#4A3B2C;
+  --accent:#7A4A26; --accent-soft:#EBDCC6; --on-accent:#FFF8EE;
+  --warn:#9A6A12; --warn-soft:#F4E6C4; --alert:#A23B2A; --alert-soft:#F3DAD3;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0;background:var(--bg)}
+body{color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+body.in-app{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+[hidden]{display:none !important}
+
+header{padding:18px 20px 8px;max-width:680px;margin:0 auto;display:flex;align-items:center;gap:12px}
+header .htext{flex:1;min-width:0}
+header h1{font-family:var(--serif);font-weight:600;font-size:2rem;line-height:1.1;margin:0;letter-spacing:-.01em;overflow-wrap:anywhere}
+header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;width:42px;height:42px;font-size:1.15rem;cursor:pointer;flex:none;display:grid;place-items:center}
+.avatar{width:52px;height:52px;border-radius:50%;object-fit:cover;flex:none;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-family:var(--serif);font-size:1.5rem;font-weight:600;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}
+
+main{max-width:680px;margin:0 auto;padding:8px 16px 28px}
+h2{font-family:var(--serif);font-weight:600;font-size:1.35rem;margin:20px 4px 10px}
+h3{font-size:1rem;margin:22px 4px 8px;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+
+/* Accueil */
+.horses{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:12px}
+.horse-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:0;overflow:hidden;text-align:left;cursor:pointer;display:flex;flex-direction:column}
+.horse-card .pic{aspect-ratio:1;width:100%;object-fit:cover;display:block;background:var(--accent-soft)}
+.horse-card .pic.ph{display:grid;place-items:center;font-family:var(--serif);font-size:3.4rem;color:var(--accent)}
+.horse-card .info{padding:10px 12px 12px}
+.horse-card .name{font-family:var(--serif);font-size:1.25rem;font-weight:600;line-height:1.2;overflow-wrap:anywhere}
+.horse-card .sub{font-size:.82rem;color:var(--muted);margin-top:2px}
+.horse-card .sub.late{color:var(--alert);font-weight:600}
+.horse-card .sub.soon{color:var(--warn);font-weight:600}
+.add-card{border:2px dashed var(--bar);background:transparent;border-radius:18px;min-height:200px;display:grid;place-items:center;align-content:center;gap:6px;cursor:pointer;color:var(--accent);font-weight:600;padding:16px}
+.add-card span{font-size:2.4rem;line-height:1;font-weight:300}
+.welcome{text-align:center;padding:24px 12px 4px}
+.welcome p{color:var(--muted);margin:6px auto 0;max-width:34ch}
+
+/* Semaine */
+.weeknav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 12px}
+.weeknav strong{font-weight:600;text-align:center;font-size:.95rem}
+.weeknav button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;cursor:pointer;min-width:44px}
+.days{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.day{display:grid;grid-template-columns:8px 1fr;gap:12px;padding:12px 14px 12px 0;border-top:1px solid var(--line)}
+.day .dbody{display:grid;gap:8px;min-width:0}
+.day .dtop{display:grid;grid-template-columns:1fr minmax(140px,52%);gap:10px;align-items:center}
+.day textarea{resize:none;min-height:44px;line-height:1.35;overflow:hidden;font-size:.95rem}
+.day select.rider{font-size:.95rem}
+.day:first-child{border-top:none}
+.day .swatch{align-self:stretch;background:var(--c);border-radius:0 4px 4px 0}
+.day .dname strong{display:block;font-weight:600}
+.day .dname span{color:var(--muted);font-size:.85rem}
+.day.today{background:var(--accent-soft)}
+.day.today .dname strong::after{content:" · aujourd’hui";font-weight:400;color:var(--accent);font-size:.85rem}
+select,input[type=text],input[type=date],input[type=number],textarea{
+  width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px}
+.summary p{margin:0 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:.88rem}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+button.chip{cursor:pointer}
+button.chip[aria-pressed=true]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+
+/* Formulaires */
+form{display:grid;gap:12px}
+label{display:grid;gap:4px;font-size:.9rem;color:var(--muted)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.primary{background:var(--accent);color:var(--on-accent);border:none;border-radius:10px;padding:12px 16px;font-weight:600;cursor:pointer;min-height:46px}
+.ghost{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;color:var(--ink);min-height:44px}
+.danger{background:transparent;border:none;color:var(--alert);cursor:pointer;padding:8px;font-size:.9rem}
+.danger-block{background:var(--alert-soft);color:var(--alert);border:none;border-radius:10px;padding:12px 16px;font-weight:600;cursor:pointer}
+.preview{background:var(--warn-soft);border-radius:10px;padding:10px 12px;font-size:.92rem}
+.photo-pick{display:flex;align-items:center;gap:14px}
+.photo-pick .avatar{width:84px;height:84px;font-size:2.2rem}
+.photo-pick .btns{display:grid;gap:6px;flex:1}
+.check{display:flex;align-items:center;gap:10px;color:var(--ink);font-size:.98rem;cursor:pointer;padding:6px 0}
+.check input{width:22px;height:22px;accent-color:var(--accent);margin:0;flex:none}
+.riders-block{display:grid;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px}
+.riders-block input,.riders-block select{background:var(--surface)}
+.rider-fields{display:grid;gap:8px}
+.filebtn{display:block;text-align:center;cursor:pointer}
+
+/* Listes */
+.list{display:grid;gap:8px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center}
+.item .grow{flex:1;min-width:0}
+.item .title{font-weight:600;overflow-wrap:anywhere}
+.item .meta{color:var(--muted);font-size:.86rem}
+.item.clickable{cursor:pointer}
+.ftype{flex:none;width:44px;height:44px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:.72rem;font-weight:700}
+.thumb{flex:none;width:44px;height:44px;border-radius:10px;object-fit:cover;background:var(--accent-soft)}
+.pill{display:inline-block;font-size:.76rem;border-radius:999px;padding:2px 9px;font-weight:600;margin-left:6px;vertical-align:1px}
+.pill.on{background:var(--accent-soft);color:var(--accent)}
+.pill.soon{background:var(--warn-soft);color:var(--warn)}
+.pill.off{background:var(--line);color:var(--muted)}
+.total{display:flex;justify-content:space-between;margin:10px 4px;font-size:.95rem}
+.empty{color:var(--muted);text-align:center;padding:22px 12px;border:1px dashed var(--bar);border-radius:12px}
+
+/* Doses */
+.doses{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.dose{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--ink);font-size:.9rem}
+.dose input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.dose:has(input:checked){background:var(--accent-soft);border-color:var(--accent)}
+
+/* Suivi détaillé d’un traitement */
+.track{display:grid;gap:6px;margin-top:10px}
+.track-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.track-row.today{background:var(--accent-soft);border-color:var(--accent)}
+.track-row.future{opacity:.55}
+.track-row .doses{margin-top:0}
+.track-row .dose:has(input:disabled){cursor:default}
+.tdate strong{display:block;font-weight:600}
+.tdate span{font-size:.82rem;color:var(--muted)}
+.progress{margin:0;font-size:.95rem}
+.progress .missed{color:var(--alert);font-weight:600}
+
+/* Maréchal */
+.horseshoe{border-radius:16px;padding:20px;background:var(--surface);border:1px solid var(--line);border-left:8px solid var(--c,var(--accent))}
+.horseshoe .big{font-family:var(--serif);font-size:1.9rem;line-height:1.15;margin:2px 0 6px}
+.horseshoe .status{font-weight:600;color:var(--c,var(--accent))}
+.horseshoe dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:14px 0 0;font-size:.92rem}
+.horseshoe dt{color:var(--muted)}
+.horseshoe dd{margin:0}
+
+/* Photos */
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;border-radius:12px;overflow:hidden}
+.gallery button{padding:0;border:none;background:var(--accent-soft);cursor:pointer;aspect-ratio:1;display:block}
+.gallery img{width:100%;height:100%;object-fit:cover;display:block}
+.caption{margin:12px 0 0;text-align:center}
+.caption .meta{color:var(--muted);font-size:.86rem}
+
+/* Feuilles (visionneuse, formulaires) */
+.overlay{position:fixed;inset:0;background:rgba(46,36,27,.55);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding-top:env(safe-area-inset-top,0px)}
+.sheet{background:var(--surface);width:100%;max-width:760px;max-height:92vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.sheet-head strong{flex:1;min-width:0;overflow-wrap:anywhere;font-family:var(--serif);font-size:1.15rem}
+.sheet-body{overflow:auto;padding:16px;flex:1}
+.sheet-body img.full{max-width:100%;max-height:62vh;display:block;margin:0 auto;border-radius:8px}
+.sheet-body iframe{width:100%;height:65vh;border:none;border-radius:8px;background:#fff}
+.sheet-body pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.88rem}
+.sheet-actions{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line)}
+.sheet-actions > *{flex:1;text-decoration:none;text-align:center}
+
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--bar);border-top:1px solid #C9B593;
+  display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);z-index:40}
+nav button{background:none;border:none;padding:8px 2px 10px;display:grid;justify-items:center;gap:2px;font-size:.74rem;color:var(--bar-ink);cursor:pointer;min-height:60px}
+nav button span{font-size:1.3rem;line-height:1.2;filter:grayscale(1);opacity:.6}
+nav button[aria-current=page]{color:var(--accent);font-weight:700}
+nav button[aria-current=page] span{filter:none;opacity:1}
+
+.install{background:var(--warn-soft);border-radius:14px;padding:14px 16px;margin:12px 0 4px;font-size:.92rem;display:flex;gap:10px;align-items:flex-start}
+.install p{margin:0;flex:1}
+.install button{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);padding:0 4px}
+.banner{background:var(--alert-soft);border-radius:12px;padding:12px 14px;margin:8px 0;font-size:.9rem}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:.9rem;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion: reduce){.toast{transition:none}}
+@media (max-width:380px){.day .dtop{grid-template-columns:1fr 55%}.row{grid-template-columns:1fr}nav button{font-size:.68rem}}
+
+/* ----- Version en ligne ----- */
+body.readonly .ro-hide{display:none !important}
+.screen-center{max-width:440px;margin:0 auto;padding:36px 20px 40px}
+.brand{text-align:center;margin-bottom:22px}
+.brand .logo{width:72px;height:72px;border-radius:20px;background:var(--accent-soft);display:grid;place-items:center;margin:0 auto 12px;font-size:2.4rem}
+.brand h1{font-family:var(--serif);font-weight:600;font-size:2.1rem;margin:0}
+.brand p{color:var(--muted);margin:6px 0 0}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--accent-soft);border-radius:12px;padding:4px;margin-bottom:14px}
+.seg button{border:none;background:none;padding:10px;border-radius:9px;cursor:pointer;font-weight:600;color:var(--muted)}
+.seg button[aria-selected=true]{background:var(--surface);color:var(--accent)}
+.linkbtn{background:none;border:none;color:var(--accent);text-decoration:underline;cursor:pointer;padding:6px 0;font-size:.92rem;justify-self:center}
+.notice{background:var(--warn-soft);border-radius:12px;padding:12px 14px;font-size:.92rem}
+.notice.ok{background:var(--accent-soft)}
+.dmeta{font-size:.78rem;color:var(--muted);margin-top:-2px}
+.access-list{display:grid;gap:8px}
+.access-row{display:grid;grid-template-columns:1fr 132px;gap:10px;align-items:center;font-size:.95rem;color:var(--ink)}
+.access-row select{min-height:40px;padding:6px 10px}
+.badge{display:inline-block;font-size:.72rem;font-weight:700;border-radius:999px;padding:2px 8px;background:var(--accent-soft);color:var(--accent);margin-left:6px;vertical-align:1px}
+.badge.read{background:var(--line);color:var(--muted)}
+.dose small{color:var(--muted);font-size:.78rem}
+.center-msg{text-align:center;color:var(--muted);padding:60px 20px}
+.mt{margin-top:14px}
+</style>
+</head>
+<body>
+
+<!-- ========== CONFIGURATION MANQUANTE ========== -->
+<div id="configError" class="screen-center" hidden>
+  <div class="brand"><div class="logo">🐴</div><h1>Suivi cheval</h1></div>
+  <div class="notice" id="configMsg">L’application n’est pas encore reliée à Supabase : renseignez SUPABASE_URL et SUPABASE_ANON_KEY en haut du script de ce fichier.</div>
+</div>
+
+<!-- ========== CHARGEMENT ========== -->
+<div id="loading" hidden>
+  <div class="center-msg">
+    <p id="loadingMsg">Chargement…</p>
+    <button class="ghost" id="retryBtn" hidden>Réessayer</button>
+  </div>
+</div>
+
+<!-- ========== CONNEXION ========== -->
+<div id="auth" class="screen-center" hidden>
+  <div class="brand"><div class="logo">🐴</div><h1>Suivi cheval</h1><p>Le carnet partagé des chevaux de la structure</p></div>
+
+  <div class="seg" role="tablist" id="authSeg">
+    <button type="button" role="tab" data-view="login" aria-selected="true">Se connecter</button>
+    <button type="button" role="tab" data-view="signup" aria-selected="false">Créer un compte</button>
+  </div>
+
+  <form id="loginForm" class="panel" data-view="login">
+    <label>Adresse e-mail <input type="email" id="loginEmail" required autocomplete="email"></label>
+    <label>Mot de passe <input type="password" id="loginPassword" required autocomplete="current-password"></label>
+    <button class="primary" type="button" data-submit>Se connecter</button>
+    <button class="linkbtn" type="button" id="toForgot">Mot de passe oublié ?</button>
+  </form>
+
+  <form id="signupForm" class="panel" data-view="signup" hidden>
+    <label>Prénom et nom <input type="text" id="signupName" required maxlength="60" autocomplete="name"></label>
+    <label>Adresse e-mail <input type="email" id="signupEmail" required autocomplete="email"></label>
+    <label>Mot de passe (8 caractères minimum) <input type="password" id="signupPassword" required minlength="8" autocomplete="new-password"></label>
+    <button class="primary" type="button" data-submit>Créer mon compte</button>
+    <p class="muted" style="margin:0;font-size:.86rem">Si la structure vous a invité(e), utilisez l’adresse e-mail communiquée à l’administrateur.</p>
+  </form>
+
+  <form id="forgotForm" class="panel" data-view="forgot" hidden>
+    <p style="margin:0">Indiquez votre adresse : vous recevrez un lien pour choisir un nouveau mot de passe.</p>
+    <label>Adresse e-mail <input type="email" id="forgotEmail" required autocomplete="email"></label>
+    <button class="primary" type="button" data-submit>Envoyer le lien</button>
+    <button class="linkbtn" type="button" data-goto="login">Retour à la connexion</button>
+  </form>
+
+  <form id="recoveryForm" class="panel" data-view="recovery" hidden>
+    <p style="margin:0"><strong>Choisissez votre nouveau mot de passe.</strong></p>
+    <label>Nouveau mot de passe (8 caractères minimum) <input type="password" id="recoveryPassword" required minlength="8" autocomplete="new-password"></label>
+    <button class="primary" type="button" data-submit>Enregistrer</button>
+  </form>
+
+  <div class="panel" data-view="sent" hidden>
+    <p id="sentMsg" style="margin:0 0 12px"></p>
+    <button class="ghost" type="button" data-goto="login" style="width:100%">Retour à la connexion</button>
+  </div>
+</div>
+
+<!-- ========== PREMIÈRE CONNEXION SANS STRUCTURE ========== -->
+<div id="setup" class="screen-center" hidden>
+  <div class="brand"><div class="logo">🐴</div><h1>Bienvenue</h1><p id="setupEmail"></p></div>
+  <div class="notice">Votre compte n’est rattaché à aucune structure pour l’instant. Si votre club utilise déjà Suivi cheval, demandez à l’administrateur de vous inviter avec cette adresse e-mail, puis touchez « Vérifier mes invitations ».</div>
+  <div style="display:grid;gap:8px;margin-top:12px">
+    <button class="ghost" type="button" id="checkInvites">Vérifier mes invitations</button>
+  </div>
+  <h2>Créer une nouvelle structure</h2>
+  <form id="setupForm" class="panel">
+    <p class="muted" style="margin:0;font-size:.9rem">À faire une seule fois, par la personne qui administrera l’outil. Vous deviendrez Gérant(e) et administrateur.</p>
+    <label>Nom de la structure <input type="text" id="orgNameInput" required maxlength="80" placeholder="ex. Association Les Écuries du Vallon"></label>
+    <label>Votre prénom et nom <input type="text" id="setupName" required maxlength="60"></label>
+    <button class="primary" type="button" data-submit>Créer la structure</button>
+  </form>
+  <div style="text-align:center;margin-top:16px"><button class="linkbtn" type="button" data-logout>Se déconnecter</button></div>
+</div>
+
+<!-- ========== ACCUEIL ========== -->
+<div id="home" hidden>
+  <header>
+    <div class="htext">
+      <h1 id="orgName"></h1>
+      <p id="homeHello"></p>
+    </div>
+    <button class="icon-btn" id="openMembers" aria-label="Membres et droits d’accès" hidden>👥</button>
+    <button class="icon-btn" id="openAccount" aria-label="Mon compte">👤</button>
+  </header>
+  <main>
+    <div id="installTip" class="install" hidden></div>
+    <div id="welcome" class="welcome" hidden><p id="welcomeMsg"></p></div>
+    <div class="horses" id="horseGrid"></div>
+  </main>
+</div>
+
+<!-- ========== FICHE D’UN CHEVAL ========== -->
+<div id="app" hidden>
+  <header>
+    <button class="icon-btn" id="backHome" aria-label="Retour aux chevaux">‹</button>
+    <div id="appAvatar"></div>
+    <div class="htext">
+      <h1 id="horseName" style="font-size:1.7rem"></h1>
+      <p id="todayLabel"></p>
+    </div>
+    <button class="icon-btn ro-hide" id="editHorse" aria-label="Modifier le profil du cheval">✏️</button>
+  </header>
+
+  <main>
+    <section id="tab-week" aria-label="Semaine">
+      <div class="weeknav">
+        <button id="prevWeek" aria-label="Semaine précédente">‹</button>
+        <strong id="weekLabel"></strong>
+        <button id="nextWeek" aria-label="Semaine suivante">›</button>
+      </div>
+      <div class="days" id="days"></div>
+      <div style="text-align:center;margin-top:10px"><button class="ghost" id="thisWeek">Revenir à cette semaine</button></div>
+      <div class="summary panel" id="weekSummary" style="margin-top:14px"></div>
+    </section>
+
+    <section id="tab-docs" hidden aria-label="Factures">
+      <div class="ro-hide">
+        <h2>Ajouter une facture</h2>
+        <form id="docForm" class="panel">
+          <label>Fichier(s) — PDF, photo, document… <input type="file" id="docFile" multiple required></label>
+          <div class="row">
+            <label>Catégorie <select id="docCat"></select></label>
+            <label>Date <input type="date" id="docDate" required></label>
+          </div>
+          <label>Montant en € (facultatif) <input type="text" id="docAmount" inputmode="decimal" placeholder="ex. 85,50"></label>
+          <button class="primary" type="button" data-submit>Ajouter la facture</button>
+        </form>
+      </div>
+      <h2>Factures</h2>
+      <div class="chips" id="docFilters"></div>
+      <div class="total" id="docTotal"></div>
+      <div class="list" id="docList"></div>
+    </section>
+
+    <section id="tab-care" hidden aria-label="Suivi vétérinaire">
+      <h2>À donner aujourd’hui</h2>
+      <div class="list" id="todayDoses"></div>
+      <div class="ro-hide">
+        <h2>Ajouter un traitement</h2>
+        <form id="careForm" class="panel">
+          <label>Traitement <input type="text" id="careName" required maxlength="200" placeholder="ex. Equipalazone, 1 sachet"></label>
+          <div class="row">
+            <label>Début <input type="date" id="careStart" required></label>
+            <label>Fin <input type="date" id="careEnd" required></label>
+          </div>
+          <label>Fréquence
+            <select id="careFreq">
+              <option value="1">1 fois par jour</option>
+              <option value="2">2 fois par jour</option>
+              <option value="3">3 fois par jour</option>
+            </select>
+          </label>
+          <button class="primary" type="button" data-submit>Ajouter le traitement</button>
+        </form>
+      </div>
+      <h3>Tous les traitements</h3>
+      <div class="list" id="careList"></div>
+    </section>
+
+    <section id="tab-farrier" hidden aria-label="Maréchalerie">
+      <h2>Prochaine ferrure</h2>
+      <div id="farrierStatus"></div>
+      <div class="ro-hide">
+        <h2>Enregistrer une ferrure</h2>
+        <form id="farrierForm" class="panel">
+          <div class="row">
+            <label>Date de la ferrure <input type="date" id="shoeDate" required></label>
+            <label>Intervalle (semaines) <input type="number" id="shoeInterval" min="1" max="26" step="1" required inputmode="numeric"></label>
+          </div>
+          <label>Remarque (facultatif) <input type="text" id="shoeNote" maxlength="200" placeholder="ex. Fers antérieurs seulement"></label>
+          <div class="preview" id="shoePreview"></div>
+          <button class="primary" type="button" data-submit>Enregistrer la ferrure</button>
+        </form>
+      </div>
+      <h3>Historique</h3>
+      <div class="list" id="shoeList"></div>
+    </section>
+
+    <section id="tab-photos" hidden aria-label="Photos">
+      <div class="ro-hide">
+        <h2>Ajouter des photos</h2>
+        <form id="photoForm" class="panel">
+          <label>Photo(s) <input type="file" id="photoFile" accept="image/*" multiple required></label>
+          <div class="row">
+            <label>Date <input type="date" id="photoDate" required></label>
+            <label>Légende (facultatif) <input type="text" id="photoCaption" maxlength="120" placeholder="ex. Concours de Uzès"></label>
+          </div>
+          <button class="primary" type="button" data-submit>Ajouter les photos</button>
+        </form>
+      </div>
+      <div id="galleryWrap"></div>
+    </section>
+  </main>
+
+  <nav aria-label="Onglets">
+    <button data-tab="week" aria-current="page"><span>📅</span>Semaine</button>
+    <button data-tab="docs"><span>🧾</span>Factures</button>
+    <button data-tab="care"><span>💊</span>Soins</button>
+    <button data-tab="farrier"><span>🔨</span>Maréchal</button>
+    <button data-tab="photos"><span>📷</span>Photos</button>
+  </nav>
+</div>
+
+<!-- Visionneuse -->
+<div class="overlay" id="viewer" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="viewerTitle">
+    <div class="sheet-head"><strong id="viewerTitle"></strong><button class="icon-btn" data-close aria-label="Fermer">✕</button></div>
+    <div class="sheet-body" id="viewerBody"></div>
+    <div class="sheet-actions" id="viewerActions"></div>
+  </div>
+</div>
+
+<!-- Profil du cheval -->
+<div class="overlay" id="horseSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="horseSheetTitle">
+    <div class="sheet-head"><strong id="horseSheetTitle">Ajouter un cheval</strong><button class="icon-btn" data-close aria-label="Fermer">✕</button></div>
+    <div class="sheet-body">
+      <form id="horseForm">
+        <div class="photo-pick">
+          <div id="horsePhotoPreview"></div>
+          <div class="btns">
+            <label class="ghost filebtn">Choisir une photo <input type="file" id="horsePhotoInput" accept="image/*" hidden></label>
+            <button type="button" class="ghost" id="removeHorsePhoto" hidden>Retirer la photo</button>
+          </div>
+        </div>
+        <label>Nom du cheval <input type="text" id="horseNameInput" maxlength="40" required placeholder="ex. Quiproquo"></label>
+        <label class="check"><input type="checkbox" id="multiRiders"> Plusieurs cavalier(e)s sur ce cheval</label>
+        <div class="riders-block" id="ridersBlock" hidden>
+          <label>Nombre de cavalier(e)s <select id="riderCount"></select></label>
+          <div class="rider-fields" id="riderFields"></div>
+        </div>
+        <button class="primary" type="button" data-submit id="horseSubmit">Ajouter le cheval</button>
+        <button class="danger-block" type="button" id="deleteHorse" hidden>Supprimer ce cheval</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Mon compte -->
+<div class="overlay" id="accountSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="accountTitle">
+    <div class="sheet-head"><strong id="accountTitle">Mon compte</strong><button class="icon-btn" data-close aria-label="Fermer">✕</button></div>
+    <div class="sheet-body">
+      <p id="accountInfo" class="muted" style="margin:0 0 12px"></p>
+      <form id="nameForm">
+        <label>Nom affiché <input type="text" id="myName" required maxlength="60"></label>
+        <button class="primary" type="button" data-submit>Enregistrer le nom</button>
+      </form>
+      <h3>Mot de passe</h3>
+      <form id="passwordForm">
+        <label>Nouveau mot de passe (8 caractères minimum) <input type="password" id="newPassword" required minlength="8" autocomplete="new-password"></label>
+        <button class="ghost" type="button" data-submit>Changer le mot de passe</button>
+      </form>
+      <div id="importBlock" hidden>
+        <h3>Reprendre les données de la version locale</h3>
+        <p class="muted" style="margin:0 4px 10px;font-size:.9rem">Importez un fichier de sauvegarde exporté depuis l’ancienne version (bouton 💾) : les chevaux, factures, soins, ferrures et photos seront ajoutés à la structure.</p>
+        <label class="ghost filebtn">Choisir le fichier de sauvegarde <input type="file" id="importLocal" accept=".json,application/json" hidden></label>
+      </div>
+      <div style="margin-top:22px"><button class="danger-block" type="button" data-logout style="width:100%">Se déconnecter</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Membres -->
+<div class="overlay" id="membersSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="membersTitle">
+    <div class="sheet-head"><strong id="membersTitle">Membres et accès</strong><button class="icon-btn" data-close aria-label="Fermer">✕</button></div>
+    <div class="sheet-body">
+      <div id="inviteDone" class="notice ok" hidden></div>
+      <button class="primary" type="button" id="newInvite" style="width:100%;margin-top:4px">+ Inviter une personne</button>
+      <div id="pendingWrap"></div>
+      <h3>Membres</h3>
+      <div class="list" id="memberList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Invitation / modification d’un membre -->
+<div class="overlay" id="personSheet" hidden style="z-index:55">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="personTitle">
+    <div class="sheet-head"><strong id="personTitle">Inviter une personne</strong><button class="icon-btn" data-close aria-label="Fermer">✕</button></div>
+    <div class="sheet-body">
+      <form id="personForm">
+        <label>Prénom et nom <input type="text" id="pName" required maxlength="60"></label>
+        <label id="pEmailWrap">Adresse e-mail <input type="email" id="pEmail" required></label>
+        <p id="pEmailText" class="muted" style="margin:0" hidden></p>
+        <label>Rôle
+          <select id="pRole">
+            <option value="gerant">Gérant(e)</option>
+            <option value="salarie">Salarié(e)</option>
+            <option value="proprietaire">Propriétaire</option>
+            <option value="demi_pension">Demi-pension</option>
+            <option value="cavalier">Cavalier(e)</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="pAdmin"> Administrateur (gère les membres, les accès et les chevaux)</label>
+        <label>Accès à tous les chevaux
+          <select id="pAll">
+            <option value="none">Non, seulement ceux choisis ci-dessous</option>
+            <option value="read">Oui, en lecture uniquement</option>
+            <option value="edit">Oui, en éditeur</option>
+          </select>
+        </label>
+        <div id="pHorsesWrap">
+          <p class="muted" style="margin:4px 0 8px;font-size:.9rem" id="pHorsesHint">Accès cheval par cheval</p>
+          <div class="access-list" id="pHorses"></div>
+        </div>
+        <button class="primary" type="button" data-submit id="personSubmit">Créer l’invitation</button>
+        <button class="danger-block" type="button" id="removeMember" hidden>Retirer ce membre de la structure</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation -->
+<div class="overlay" id="confirmSheet" style="z-index:70;align-items:center;padding:16px" hidden>
+  <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="confirmText" style="border-radius:18px;max-width:420px">
+    <div class="sheet-body"><p id="confirmText" style="margin:0;font-size:1.02rem"></p></div>
+    <div class="sheet-actions">
+      <button class="ghost" type="button" id="confirmCancel">Annuler</button>
+      <button class="danger-block" type="button" id="confirmOk">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   CONFIGURATION — à remplir avec les informations de votre projet Supabase
+   (Supabase → Project Settings → API / Data API)
+   ===================================================================== */
+const SUPABASE_URL = "";        // ex. "https://abcdefghijkl.supabase.co"
+const SUPABASE_ANON_KEY = "";   // clé « anon public » ou « publishable »
+/* ===================================================================== */
+
+const BUCKET = "fichiers";
+const ACTIVITIES = [
+  ["Dressage","#4C6FA8"],["CSO","#C0563A"],["Cross","#7D8A2E"],["Concours","#3B428C"],["Mise en selle","#8A5FA8"],
+  ["Balade au pas","#3C8FA0"],["Trotting","#D19A22"],["Longe","#6B7C8F"],["TAP","#B04F7A"],
+  ["Barre au sol","#8C6A40"],["Stretching","#5E9FB8"],["Club","#C2703D"],["Repos","#B5AA9C"]
+];
+const DOC_CATS = ["Vétérinaire","Maréchal","Dentiste","Ostéopathe","Alimentation","Pension","Autre"];
+const ROLES = { gerant:"Gérant(e)", salarie:"Salarié(e)", proprietaire:"Propriétaire", demi_pension:"Demi-pension", cavalier:"Cavalier(e)" };
+const ROLE_DEFAULTS = {
+  gerant:       { admin:true,  all:"edit", hint:"" },
+  salarie:      { admin:false, all:"edit", hint:"" },
+  proprietaire: { admin:false, all:"none", hint:"Choisissez ses chevaux, en général en « Éditeur »." },
+  demi_pension: { admin:false, all:"none", hint:"Choisissez le cheval concerné, en « Lecture » ou « Éditeur »." },
+  cavalier:     { admin:false, all:"none", hint:"Choisissez les chevaux montés, en général en « Lecture »." }
+};
+const LEVEL_NUM = { none:0, read:1, edit:2 };
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const actColor = a => (ACTIVITIES.find(x => x[0] === a) || [,"#999"])[1];
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
+const newId = () => (crypto.randomUUID ? crypto.randomUUID() :
+  "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)));
+
+/* ---------- Dates ---------- */
+const pad = n => String(n).padStart(2, "0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+const addDays = (d, n) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate()+n); return x; };
+const todayISO = () => iso(new Date());
+const fmt = (s, o = {day:"numeric", month:"long", year:"numeric"}) => parse(s).toLocaleDateString("fr-FR", o);
+const fmtStamp = ts => new Date(ts).toLocaleString("fr-FR", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"});
+const fmtHour = ts => new Date(ts).toLocaleTimeString("fr-FR", {hour:"2-digit", minute:"2-digit"});
+const daysBetween = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
+const monday = d => addDays(d, -((d.getDay() + 6) % 7));
+const longToday = () => cap(new Date().toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long", year:"numeric"}));
+const appUrl = () => location.origin + location.pathname;
+
+/* ---------- Petits outils d’interface ---------- */
+function toast(msg, ms = 2400){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), ms);
+}
+function onSubmit(sel, fn){
+  const form = $(sel);
+  form.addEventListener("submit", e => e.preventDefault());
+  const btn = form.querySelector("[data-submit]");
+  const run = async () => {
+    if (!form.checkValidity()){ form.reportValidity(); return; }
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try { await fn(); } catch(e){ console.error(e); } finally { btn.disabled = false; }
+  };
+  btn.addEventListener("click", run);
+  form.addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.target.tagName === "INPUT" && e.target.type !== "file"){ e.preventDefault(); run(); }
+  });
+}
+function askConfirm(msg, okLabel = "Supprimer"){
+  return new Promise(res => {
+    const sheet = $("#confirmSheet"), ok = $("#confirmOk"), cancel = $("#confirmCancel");
+    $("#confirmText").textContent = msg; ok.textContent = okLabel;
+    const done = v => { sheet.hidden = true; ok.onclick = cancel.onclick = sheet.onclick = null; res(v); };
+    ok.onclick = () => done(true);
+    cancel.onclick = () => done(false);
+    sheet.onclick = e => { if (e.target === sheet) done(false); };
+    sheet.hidden = false; cancel.focus();
+  });
+}
+let viewerUrl = null;
+function openSheet(id){ $(id).hidden = false; }
+function closeSheet(el){
+  el.hidden = true;
+  if (el.id === "viewer"){ $("#viewerBody").innerHTML = ""; if (viewerUrl){ const u = viewerUrl; viewerUrl = null; setTimeout(() => URL.revokeObjectURL(u), 1000); } }
+}
+document.querySelectorAll(".overlay:not(#confirmSheet)").forEach(o => {
+  o.addEventListener("click", e => { if (e.target === o || e.target.closest("[data-close]")) closeSheet(o); });
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll(".overlay:not([hidden]):not(#confirmSheet)").forEach(closeSheet); });
+
+async function resizeImage(file, max, quality = 0.85){
+  try {
+    const u = URL.createObjectURL(file);
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; });
+    URL.revokeObjectURL(u);
+    const w = img.naturalWidth, h = img.naturalHeight, r = Math.min(1, max / Math.max(w, h));
+    if (r === 1 && file.size < 1.5e6) return file;
+    const c = document.createElement("canvas"); c.width = Math.round(w*r); c.height = Math.round(h*r);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise(res => c.toBlob(res, "image/jpeg", quality));
+    return blob || file;
+  } catch(e){ return file; }
+}
+
+/* ---------- Supabase ---------- */
+let sb = null;
+function errMsg(e){
+  const m = (e && (e.message || e.error_description || e.msg)) || String(e || "");
+  if (/Invalid login credentials/i.test(m)) return "E-mail ou mot de passe incorrect.";
+  if (/Email not confirmed/i.test(m)) return "Adresse pas encore confirmée : cliquez sur le lien reçu par e-mail.";
+  if (/already registered|already been registered|already exists/i.test(m) && !/invitations/i.test(m)) return "Un compte existe déjà avec cette adresse : connectez-vous.";
+  if (/rate limit|too many/i.test(m)) return "Trop de tentatives, réessayez dans quelques minutes.";
+  if (/row-level security|permission denied|violates row-level|403|Unauthorized/i.test(m)) return "Vous n’avez pas les droits pour cette action.";
+  if (/Failed to fetch|NetworkError|Load failed|network/i.test(m)) return "Pas de connexion internet. Réessayez.";
+  if (/invitations_org_id_email_key|duplicate key.*invitations/i.test(m)) return "Une invitation existe déjà pour cette adresse.";
+  if (/Payload too large|exceeded the maximum allowed size|too large/i.test(m)) return "Fichier trop volumineux (20 Mo maximum).";
+  if (/déjà partie|Non connecté/i.test(m)) return m;
+  if (/same.*password|different from the old/i.test(m)) return "Choisissez un mot de passe différent de l’ancien.";
+  return "Erreur : " + m;
+}
+async function q(promise){
+  const { data, error } = await promise;
+  if (error){ console.error(error); toast(errMsg(error), 4000); throw error; }
+  return data;
+}
+const signedCache = new Map();
+async function signedUrls(paths){
+  const now = Date.now();
+  const need = [...new Set(paths.filter(p => p && !((signedCache.get(p) || {}).exp > now + 60000)))];
+  if (need.length){
+    const { data, error } = await sb.storage.from(BUCKET).createSignedUrls(need, 3600);
+    if (!error && data) data.forEach(d => { if (d.signedUrl && d.path) signedCache.set(d.path, { url:d.signedUrl, exp: now + 3500000 }); });
+  }
+  const out = {};
+  paths.forEach(p => { const c = p && signedCache.get(p); if (c) out[p] = c.url; });
+  return out;
+}
+const safeName = n => (n || "fichier").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w.-]+/g, "_").slice(-80) || "fichier";
+async function uploadFile(path, blob, type){
+  await q(sb.storage.from(BUCKET).upload(path, blob, { contentType: type || blob.type || "application/octet-stream", upsert:false }));
+}
+async function removeFiles(paths){
+  paths = paths.filter(Boolean);
+  for (let i = 0; i < paths.length; i += 100){ await sb.storage.from(BUCKET).remove(paths.slice(i, i + 100)); }
+}
+async function downloadBlob(path){ return await q(sb.storage.from(BUCKET).download(path)); }
+
+/* ---------- État ---------- */
+let user = null, me = null, org = null, members = [], myAccess = [], horses = [], cur = null, level = 0;
+const memberName = uid => { if (!uid) return ""; const m = members.find(x => x.user_id === uid); return m ? m.display_name : "un ancien membre"; };
+function levelFor(horseId){
+  if (!me) return 0;
+  if (me.is_admin) return 2;
+  const a = myAccess.find(x => x.horse_id === horseId);
+  return Math.max(LEVEL_NUM[me.all_horses] || 0, a ? LEVEL_NUM[a.level] : 0);
+}
+
+/* ---------- Écrans ---------- */
+const SCREENS = ["configError","loading","auth","setup","home","app"];
+function showScreen(n){
+  SCREENS.forEach(s => { $("#" + s).hidden = s !== n; });
+  document.body.classList.toggle("in-app", n === "app");
+  window.scrollTo(0, 0);
+}
+function showLoading(msg = "Chargement…", retry = null){
+  $("#loadingMsg").textContent = msg;
+  $("#retryBtn").hidden = !retry; $("#retryBtn").onclick = retry;
+  showScreen("loading");
+}
+
+/* ---------- Connexion ---------- */
+function showAuthView(v){
+  showScreen("auth");
+  $("#authSeg").hidden = !(v === "login" || v === "signup");
+  document.querySelectorAll("#authSeg button").forEach(b => b.setAttribute("aria-selected", b.dataset.view === v));
+  document.querySelectorAll("#auth [data-view]:not(button)").forEach(el => { el.hidden = el.dataset.view !== v; });
+}
+document.querySelectorAll("#authSeg button").forEach(b => b.onclick = () => showAuthView(b.dataset.view));
+document.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => showAuthView(b.dataset.goto));
+$("#toForgot").onclick = () => { $("#forgotEmail").value = $("#loginEmail").value; showAuthView("forgot"); };
+function showSent(msg){ $("#sentMsg").textContent = msg; showAuthView("sent"); }
+
+onSubmit("#loginForm", async () => {
+  await q(sb.auth.signInWithPassword({ email: $("#loginEmail").value.trim(), password: $("#loginPassword").value }));
+  $("#loginPassword").value = "";
+  await afterLogin();
+});
+onSubmit("#signupForm", async () => {
+  const email = $("#signupEmail").value.trim();
+  const data = await q(sb.auth.signUp({ email, password: $("#signupPassword").value,
+    options: { data: { display_name: $("#signupName").value.trim() }, emailRedirectTo: appUrl() } }));
+  $("#signupPassword").value = "";
+  if (data.session) await afterLogin();
+  else showSent(`Un e-mail de confirmation a été envoyé à ${email}. Ouvrez le lien qu’il contient pour activer votre compte, puis connectez-vous. Pensez à regarder dans les courriers indésirables.`);
+});
+onSubmit("#forgotForm", async () => {
+  const email = $("#forgotEmail").value.trim();
+  await q(sb.auth.resetPasswordForEmail(email, { redirectTo: appUrl() }));
+  showSent(`Si un compte existe pour ${email}, un e-mail contenant un lien de réinitialisation vient d’être envoyé.`);
+});
+onSubmit("#recoveryForm", async () => {
+  await q(sb.auth.updateUser({ password: $("#recoveryPassword").value }));
+  $("#recoveryPassword").value = "";
+  toast("Mot de passe modifié");
+  await afterLogin();
+});
+document.querySelectorAll("[data-logout]").forEach(b => b.onclick = async () => {
+  document.querySelectorAll(".overlay").forEach(o => o.hidden = true);
+  await sb.auth.signOut();
+});
+function resetState(){ user = me = org = cur = null; members = []; myAccess = []; horses = []; signedCache.clear(); }
+
+async function loadMe(){
+  const rows = await q(sb.from("members").select("*").eq("user_id", user.id).order("created_at").limit(1));
+  me = rows[0] || null;
+  if (!me){ org = null; return; }
+  const [o, ms, acc] = await Promise.all([
+    q(sb.from("organizations").select("*").eq("id", me.org_id).single()),
+    q(sb.from("members").select("id,user_id,email,display_name,role,is_admin,all_horses").eq("org_id", me.org_id).order("display_name")),
+    q(sb.from("horse_access").select("horse_id,level").eq("member_id", me.id))
+  ]);
+  org = o; members = ms; myAccess = acc;
+}
+async function afterLogin(){
+  showLoading();
+  try {
+    const { data } = await sb.auth.getUser();
+    user = data && data.user;
+    if (!user){ showAuthView("login"); return; }
+    await sb.rpc("claim_invitations");
+    await loadMe();
+    if (!me) return showSetup();
+    await loadHorses();
+    goHome();
+  } catch(e){
+    console.error(e);
+    showLoading("Impossible de charger les données. Vérifiez votre connexion.", afterLogin);
+  }
+}
+
+/* ---------- Première connexion ---------- */
+function showSetup(){
+  $("#setupEmail").textContent = "Connecté(e) avec " + user.email;
+  $("#setupName").value = (user.user_metadata && user.user_metadata.display_name) || "";
+  showScreen("setup");
+}
+$("#checkInvites").onclick = afterLogin;
+onSubmit("#setupForm", async () => {
+  await q(sb.rpc("create_organization", { p_name: $("#orgNameInput").value.trim(), p_display_name: $("#setupName").value.trim() }));
+  toast("Structure créée");
+  await afterLogin();
+});
+
+/* ---------- Accueil ---------- */
+async function loadHorses(){
+  horses = await q(sb.from("horses").select("id,org_id,name,photo_path,multi,riders(id,name,position)").eq("org_id", org.id).order("name"));
+  horses.forEach(h => { h.riders = (h.riders || []).sort((a, b) => a.position - b.position); });
+}
+function horsePhotoHTML(h, urls, cls){
+  const u = h.photo_path && urls[h.photo_path];
+  if (u) return `<img class="${cls}" alt="" src="${esc(u)}">`;
+  return `<div class="${cls}${cls === "pic" ? " ph" : ""}" aria-hidden="true">${esc((h.name || "?").trim().charAt(0).toUpperCase())}</div>`;
+}
+async function renderHome(){
+  $("#orgName").textContent = org.name;
+  $("#homeHello").textContent = `${me.display_name} · ${ROLES[me.role]}${me.is_admin ? " · administrateur" : ""}`;
+  $("#openMembers").hidden = !me.is_admin;
+  document.title = "Suivi cheval";
+  const grid = $("#horseGrid");
+  $("#welcome").hidden = horses.length > 0;
+  $("#welcomeMsg").textContent = me.is_admin
+    ? "Ajoutez le premier cheval de la structure, puis invitez les membres avec le bouton 👥."
+    : "Aucun cheval ne vous est encore ouvert. Demandez à l’administrateur de la structure de vous donner accès.";
+  const ids = horses.map(h => h.id), t = todayISO();
+  let lastShoe = {}, activeCount = {}, urls = {};
+  if (ids.length){
+    try {
+      const [sh, tr, u] = await Promise.all([
+        q(sb.from("shoeings").select("horse_id,date,interval_weeks").in("horse_id", ids).order("date", {ascending:false})),
+        q(sb.from("treatments").select("horse_id").in("horse_id", ids).lte("start_date", t).gte("end_date", t)),
+        signedUrls(horses.map(h => h.photo_path).filter(Boolean))
+      ]);
+      sh.forEach(s => { if (!lastShoe[s.horse_id]) lastShoe[s.horse_id] = s; });
+      tr.forEach(x => { activeCount[x.horse_id] = (activeCount[x.horse_id] || 0) + 1; });
+      urls = u;
+    } catch(e){}
+  }
+  grid.innerHTML = "";
+  horses.forEach(h => {
+    const parts = []; let cls = "";
+    if (h.multi && h.riders.length) parts.push(`${h.riders.length} cavalier(e)s`);
+    const s = lastShoe[h.id];
+    if (s){
+      const left = daysBetween(t, nextShoe(s.date, s.interval_weeks));
+      if (left < 0){ parts.push(`Ferrure en retard de ${plural(-left,"jour","jours")}`); cls = "late"; }
+      else if (left <= 7){ parts.push(left === 0 ? "Ferrure aujourd’hui" : `Ferrure dans ${plural(left,"jour","jours")}`); cls = "soon"; }
+      else parts.push(`Ferrure dans ${plural(left,"jour","jours")}`);
+    }
+    if (activeCount[h.id]) parts.push(`${plural(activeCount[h.id],"traitement","traitements")} en cours`);
+    if (levelFor(h.id) < 2) parts.push("Lecture seule");
+    const b = document.createElement("button"); b.className = "horse-card"; b.type = "button";
+    b.innerHTML = `${horsePhotoHTML(h, urls, "pic")}<div class="info"><div class="name">${esc(h.name)}</div><div class="sub ${cls}">${esc(parts.join(" · ") || "Rien à signaler")}</div></div>`;
+    b.onclick = () => enterHorse(h.id);
+    grid.append(b);
+  });
+  if (me.is_admin){
+    const add = document.createElement("button"); add.type = "button"; add.className = "add-card";
+    add.innerHTML = `<span>+</span>Ajouter un cheval`;
+    add.onclick = () => openHorseForm(null);
+    grid.append(add);
+  }
+}
+function goHome(){
+  cur = null; document.body.classList.remove("readonly");
+  showScreen("home"); renderHome();
+}
+
+/* ---------- Fiche d’un cheval ---------- */
+async function enterHorse(id, push = true){
+  cur = horses.find(h => h.id === id); if (!cur) return goHome();
+  level = levelFor(id);
+  document.body.classList.toggle("readonly", level < 2);
+  weekStart = monday(new Date()); docFilter = "Toutes"; $("#shoeInterval").value = "";
+  renderAppHeader();
+  showScreen("app");
+  if (push){ try { history.pushState({horse:id}, "", "#cheval"); } catch(e){} }
+  showTab("week");
+}
+async function renderAppHeader(){
+  $("#horseName").textContent = cur.name;
+  $("#todayLabel").textContent = longToday() + (level < 2 ? " · lecture seule" : "");
+  document.title = cur.name + " — Suivi cheval";
+  const urls = cur.photo_path ? await signedUrls([cur.photo_path]) : {};
+  $("#appAvatar").innerHTML = horsePhotoHTML(cur, urls, "avatar");
+}
+$("#backHome").onclick = () => { if (history.state && history.state.horse) history.back(); else goHome(); };
+window.addEventListener("popstate", e => {
+  if (!me) return;
+  if (e.state && e.state.horse) enterHorse(e.state.horse, false); else goHome();
+});
+
+const TABS = ["week","docs","care","farrier","photos"];
+let currentTab = "week";
+function showTab(name){
+  if (!TABS.includes(name)) name = "week";
+  currentTab = name;
+  TABS.forEach(t => { $("#tab-"+t).hidden = t !== name; });
+  document.querySelectorAll("nav button").forEach(b => {
+    if (b.dataset.tab === name) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
+  });
+  window.scrollTo(0, 0);
+  ({ week:renderWeek, docs:renderDocs, care:renderCare, farrier:renderFarrier, photos:renderPhotos })[name]();
+}
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+// Quand on revient sur l’appli, on recharge pour voir les saisies des autres
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible" || !me) return;
+  if (!$("#app").hidden && cur && !document.activeElement.matches("textarea,input")) showTab(currentTab);
+  else if (!$("#home").hidden) loadHorses().then(renderHome).catch(() => {});
+});
+
+/* ---------- Profil du cheval ---------- */
+let editingId = null, pendingPhoto;   // undefined = inchangée, null = retirée, Blob = nouvelle
+let previewUrl = null;
+async function refreshPhotoPreview(){
+  const name = $("#horseNameInput").value || "?";
+  const h = editingId ? horses.find(x => x.id === editingId) : null;
+  let src = null;
+  if (pendingPhoto){ if (previewUrl) URL.revokeObjectURL(previewUrl); previewUrl = URL.createObjectURL(pendingPhoto); src = previewUrl; }
+  else if (pendingPhoto === undefined && h && h.photo_path){ src = (await signedUrls([h.photo_path]))[h.photo_path]; }
+  $("#horsePhotoPreview").innerHTML = src ? `<img class="avatar" alt="" src="${esc(src)}">`
+    : `<div class="avatar" aria-hidden="true">${esc(name.trim().charAt(0).toUpperCase() || "?")}</div>`;
+  $("#removeHorsePhoto").hidden = !src;
+}
+$("#riderCount").innerHTML = Array.from({length:98}, (_, i) => `<option value="${i+2}">${i+2}</option>`).join("");
+let riderDraft = [];
+function readRiderFields(){ document.querySelectorAll("#riderFields input").forEach((inp, i) => { if (riderDraft[i]) riderDraft[i].name = inp.value; }); }
+function renderRiderFields(){
+  readRiderFields();
+  const n = parseInt($("#riderCount").value, 10) || 2;
+  while (riderDraft.length < n) riderDraft.push({ id: newId(), name:"" });
+  const box = $("#riderFields"); box.innerHTML = "";
+  for (let i = 0; i < n; i++){
+    const l = document.createElement("label"); l.textContent = `Cavalier(e) ${i + 1}`;
+    const inp = document.createElement("input");
+    inp.type = "text"; inp.maxLength = 40; inp.required = true; inp.value = riderDraft[i].name; inp.placeholder = "Prénom ou nom";
+    l.append(inp); box.append(l);
+  }
+}
+function toggleRiders(){
+  const on = $("#multiRiders").checked;
+  $("#ridersBlock").hidden = !on;
+  if (on) renderRiderFields(); else { readRiderFields(); $("#riderFields").innerHTML = ""; }
+}
+$("#multiRiders").addEventListener("change", toggleRiders);
+$("#riderCount").addEventListener("change", renderRiderFields);
+function openHorseForm(id){
+  editingId = id; pendingPhoto = undefined;
+  const h = id ? horses.find(x => x.id === id) : null;
+  riderDraft = h ? h.riders.map(r => ({ id:r.id, name:r.name })) : [];
+  $("#horseSheetTitle").textContent = h ? "Modifier le profil" : "Ajouter un cheval";
+  $("#horseSubmit").textContent = h ? "Enregistrer" : "Ajouter le cheval";
+  $("#deleteHorse").hidden = !(h && me.is_admin);
+  $("#horseNameInput").value = h ? h.name : "";
+  $("#horsePhotoInput").value = "";
+  $("#multiRiders").checked = !!(h && h.multi);
+  $("#riderCount").value = String(Math.min(99, Math.max(2, riderDraft.length || 2)));
+  $("#riderFields").innerHTML = "";
+  toggleRiders();
+  refreshPhotoPreview();
+  openSheet("#horseSheet");
+}
+$("#horseNameInput").addEventListener("input", () => { if (!$("#horsePhotoPreview img")) refreshPhotoPreview(); });
+$("#horsePhotoInput").addEventListener("change", async e => {
+  const f = e.target.files[0]; if (!f) return;
+  pendingPhoto = await resizeImage(f, 700, 0.85);
+  refreshPhotoPreview();
+});
+$("#removeHorsePhoto").onclick = () => { pendingPhoto = null; refreshPhotoPreview(); };
+onSubmit("#horseForm", async () => {
+  const name = $("#horseNameInput").value.trim(); if (!name) return;
+  const multi = $("#multiRiders").checked;
+  let riders = [];
+  if (multi){
+    readRiderFields();
+    riders = riderDraft.slice(0, parseInt($("#riderCount").value, 10)).map(r => ({ id:r.id, name:r.name.trim() }));
+    if (riders.some(r => !r.name)){ toast("Indiquez le nom de chaque cavalier(e)"); return; }
+  }
+  let horseId = editingId, oldPhoto = null;
+  if (editingId){
+    oldPhoto = horses.find(x => x.id === editingId).photo_path;
+    await q(sb.from("horses").update({ name, multi }).eq("id", editingId));
+  } else {
+    const row = await q(sb.from("horses").insert({ org_id: org.id, name, multi }).select("id").single());
+    horseId = row.id;
+  }
+  if (pendingPhoto){
+    const path = `${horseId}/profil-${Date.now()}.jpg`;
+    await uploadFile(path, pendingPhoto, pendingPhoto.type || "image/jpeg");
+    await q(sb.from("horses").update({ photo_path: path }).eq("id", horseId));
+    if (oldPhoto) removeFiles([oldPhoto]);
+  } else if (pendingPhoto === null && oldPhoto){
+    await q(sb.from("horses").update({ photo_path: null }).eq("id", horseId));
+    removeFiles([oldPhoto]);
+  }
+  // Cavalier(e)s : mise à jour, ajout, suppression
+  if (riders.length) await q(sb.from("riders").upsert(riders.map((r, i) => ({ id:r.id, horse_id:horseId, name:r.name, position:i }))));
+  const del = sb.from("riders").delete().eq("horse_id", horseId);
+  await q(riders.length ? del.not("id", "in", `(${riders.map(r => r.id).join(",")})`) : del);
+  await loadHorses();
+  closeSheet($("#horseSheet"));
+  toast(editingId ? "Profil enregistré" : `${name} a été ajouté`);
+  if (cur && cur.id === horseId){ cur = horses.find(h => h.id === horseId); renderAppHeader(); if (currentTab === "week") renderWeek(); }
+  else renderHome();
+});
+$("#editHorse").onclick = () => openHorseForm(cur.id);
+$("#deleteHorse").onclick = async () => {
+  const h = horses.find(x => x.id === editingId);
+  if (!(await askConfirm(`Supprimer ${h.name} et toutes ses données (activités, factures, soins, ferrures, photos) pour tous les membres ? Cette action est définitive.`, `Supprimer ${h.name}`))) return;
+  try {
+    const docs = await q(sb.from("documents").select("path").eq("horse_id", h.id));
+    await q(sb.from("horses").delete().eq("id", h.id));
+    removeFiles([...docs.map(d => d.path), h.photo_path]);
+    await loadHorses();
+    closeSheet($("#horseSheet")); toast(`${h.name} a été supprimé`);
+    if (history.state && history.state.horse){ try { history.back(); } catch(e){ goHome(); } } else goHome();
+  } catch(e){}
+};
+
+/* ---------- Semaine ---------- */
+let weekStart = monday(new Date()), weekDays = {}, noteTimer;
+const riderName = id => ((cur.riders || []).find(r => r.id === id) || {}).name || "";
+function autoGrow(t){ t.style.height = "auto"; t.style.height = t.scrollHeight + 2 + "px"; }
+async function saveDay(k, patch){
+  const prev = weekDays[k] || {};
+  const d = { activity: prev.activity || null, rider_id: prev.rider_id || null, note: prev.note || null, ...patch };
+  weekDays[k] = { ...d, horse_id: cur.id, date: k, updated_by: user.id, updated_at: new Date().toISOString() };
+  if (!d.activity && !d.rider_id && !(d.note || "").trim()){
+    delete weekDays[k];
+    await q(sb.from("days").delete().eq("horse_id", cur.id).eq("date", k));
+  } else {
+    await q(sb.from("days").upsert({ horse_id: cur.id, date: k, activity: d.activity, rider_id: d.rider_id,
+      note: (d.note || "").trim() ? d.note : null, updated_by: user.id, updated_at: new Date().toISOString() }));
+  }
+}
+async function renderWeek(){
+  const horse = cur, from = iso(weekStart), to = iso(addDays(weekStart, 6));
+  $("#weekLabel").textContent =
+    `${weekStart.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})} – ${addDays(weekStart, 6).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})}`;
+  try {
+    const rows = await q(sb.from("days").select("*").eq("horse_id", horse.id).gte("date", from).lte("date", to));
+    if (cur !== horse || iso(weekStart) !== from) return;
+    weekDays = {}; rows.forEach(r => { weekDays[r.date] = r; });
+  } catch(e){ return; }
+  drawWeek();
+}
+function drawWeek(){
+  const multi = !!(cur.multi && cur.riders.length), ro = level < 2;
+  const list = $("#days"); list.innerHTML = "";
+  const counts = {}, byRider = {}, today = todayISO();
+  for (let i = 0; i < 7; i++){
+    const d = addDays(weekStart, i), k = iso(d), day = weekDays[k] || {}, val = day.activity || "";
+    if (val) counts[val] = (counts[val] || 0) + 1;
+    if (multi && day.rider_id && riderName(day.rider_id) && val !== "Repos") byRider[day.rider_id] = (byRider[day.rider_id] || 0) + 1;
+    const longDate = d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+    const row = document.createElement("div");
+    row.className = "day" + (k === today ? " today" : "");
+    row.innerHTML = `<span class="swatch" style="--c:${val ? actColor(val) : "transparent"}"></span>
+      <div class="dbody"><div class="dtop"><div class="dname"><strong>${cap(d.toLocaleDateString("fr-FR",{weekday:"long"}))}</strong>
+      <span>${d.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</span></div></div></div>`;
+    const body = row.querySelector(".dbody");
+    const sel = document.createElement("select"); sel.disabled = ro;
+    sel.setAttribute("aria-label", "Activité du " + longDate);
+    sel.innerHTML = `<option value="">Activité…</option>` + ACTIVITIES.map(([a]) => `<option${a === val ? " selected" : ""}>${a}</option>`).join("");
+    sel.addEventListener("change", async () => { try { await saveDay(k, { activity: sel.value || null }); } catch(e){} drawWeek(); });
+    row.querySelector(".dtop").append(sel);
+    if (multi){
+      const rs = document.createElement("select"); rs.className = "rider"; rs.disabled = ro;
+      rs.setAttribute("aria-label", "Cavalier(e) du " + longDate);
+      rs.innerHTML = `<option value="">Cavalier(e)…</option>` +
+        cur.riders.map(r => `<option value="${r.id}"${r.id === day.rider_id ? " selected" : ""}>${esc(r.name)}</option>`).join("");
+      rs.addEventListener("change", async () => { try { await saveDay(k, { rider_id: rs.value || null }); } catch(e){} drawWeek(); });
+      body.append(rs);
+    }
+    if (!ro || day.note){
+      const note = document.createElement("textarea");
+      note.rows = 1; note.maxLength = 1000; note.value = day.note || ""; note.readOnly = ro;
+      note.placeholder = "Note du jour (facultatif)";
+      note.setAttribute("aria-label", "Note du " + longDate);
+      const commit = () => { clearTimeout(noteTimer); if ((note.value || "") !== ((weekDays[k] || {}).note || "")) saveDay(k, { note: note.value }).catch(() => {}); };
+      note.addEventListener("input", () => { autoGrow(note); clearTimeout(noteTimer); noteTimer = setTimeout(commit, 800); });
+      note.addEventListener("blur", commit);
+      body.append(note);
+      requestAnimationFrame(() => autoGrow(note));
+    }
+    if (day.updated_by){
+      const m = document.createElement("div"); m.className = "dmeta";
+      m.textContent = `Modifié par ${memberName(day.updated_by)} · ${fmtStamp(day.updated_at)}`;
+      body.append(m);
+    }
+    list.append(row);
+  }
+  const entries = Object.entries(counts);
+  const worked = entries.filter(([a]) => a !== "Repos").reduce((s, [,n]) => s + n, 0);
+  const riderChips = multi && Object.keys(byRider).length
+    ? `<p class="muted" style="margin:12px 0 6px;font-size:.9rem">Par cavalier(e)</p><div class="chips">${cur.riders.filter(r => byRider[r.id]).map(r => `<span class="chip">${esc(r.name)} · ${plural(byRider[r.id], "jour", "jours")}</span>`).join("")}</div>` : "";
+  $("#weekSummary").innerHTML = entries.length
+    ? `<p><strong>${plural(worked, "jour de travail", "jours de travail")}</strong> cette semaine${counts.Repos ? `, ${plural(counts.Repos, "jour", "jours")} de repos` : ""}.</p>
+       <div class="chips">${entries.filter(([a]) => a !== "Repos").map(([a,n]) => `<span class="chip"><i style="background:${actColor(a)}"></i>${a} × ${n}</span>`).join("")}</div>${riderChips}`
+    : `<p class="muted" style="margin:0">Aucune activité saisie pour cette semaine.</p>`;
+}
+$("#prevWeek").onclick = () => { weekStart = addDays(weekStart, -7); renderWeek(); };
+$("#nextWeek").onclick = () => { weekStart = addDays(weekStart, 7); renderWeek(); };
+$("#thisWeek").onclick = () => { weekStart = monday(new Date()); renderWeek(); };
+
+/* ---------- Factures ---------- */
+let docFilter = "Toutes";
+$("#docCat").innerHTML = DOC_CATS.map(c => `<option>${c}</option>`).join("");
+const parseAmount = s => { const n = parseFloat(String(s).replace(/\s/g,"").replace(",", ".")); return isNaN(n) ? null : Math.round(n * 100) / 100; };
+const euro = n => Number(n).toLocaleString("fr-FR", {style:"currency", currency:"EUR"});
+function typeLabel(f){
+  const t = f.mime || "", ext = (f.name.split(".").pop() || "").toUpperCase();
+  if (t === "application/pdf") return "PDF";
+  if (t.startsWith("image/")) return "IMG";
+  return ext.length && ext.length <= 4 ? ext : "DOC";
+}
+async function addDocument(file, kind, extra){
+  const path = `${cur.id}/${newId()}-${safeName(file.name)}`;
+  await uploadFile(path, file, file.type);
+  try {
+    await q(sb.from("documents").insert({ horse_id: cur.id, kind, name: file.name || "photo.jpg", mime: file.type || null, size: file.size, path, ...extra }));
+  } catch(e){ removeFiles([path]); throw e; }
+}
+onSubmit("#docForm", async () => {
+  const files = [...$("#docFile").files]; if (!files.length) return;
+  const amount = parseAmount($("#docAmount").value);
+  const btn = $("#docForm [data-submit]"); btn.textContent = "Envoi en cours…";
+  try {
+    for (const file of files){
+      await addDocument(file, "invoice", { category: $("#docCat").value, date: $("#docDate").value, amount: files.length === 1 ? amount : null });
+    }
+    $("#docFile").value = ""; $("#docAmount").value = "";
+    toast(files.length > 1 ? `${files.length} factures ajoutées` : "Facture ajoutée");
+  } finally { btn.textContent = "Ajouter la facture"; renderDocs(); }
+});
+async function renderDocs(){
+  const horse = cur;
+  let all;
+  try { all = await q(sb.from("documents").select("*").eq("horse_id", horse.id).eq("kind", "invoice").order("date", {ascending:false}).order("created_at", {ascending:false})); }
+  catch(e){ return; }
+  if (cur !== horse) return;
+  const cats = ["Toutes", ...DOC_CATS.filter(c => all.some(f => f.category === c))];
+  if (!cats.includes(docFilter)) docFilter = "Toutes";
+  const fl = $("#docFilters"); fl.innerHTML = "";
+  if (all.length) cats.forEach(c => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "chip";
+    b.textContent = c; b.setAttribute("aria-pressed", c === docFilter);
+    b.onclick = () => { docFilter = c; renderDocs(); };
+    fl.append(b);
+  });
+  const shown = all.filter(f => docFilter === "Toutes" || f.category === docFilter);
+  const total = shown.reduce((s, f) => s + (f.amount ? Number(f.amount) : 0), 0);
+  $("#docTotal").innerHTML = shown.length
+    ? `<span class="muted">${plural(shown.length, "document", "documents")}</span><strong>${total ? "Total : " + euro(total) : ""}</strong>` : "";
+  const urls = await signedUrls(shown.filter(f => (f.mime || "").startsWith("image/")).map(f => f.path));
+  const list = $("#docList"); list.innerHTML = "";
+  if (!all.length){ list.innerHTML = `<div class="empty">Aucune facture pour l’instant.</div>`; return; }
+  shown.forEach(f => {
+    const it = document.createElement("div"); it.className = "item clickable"; it.tabIndex = 0;
+    const icon = urls[f.path] ? `<img class="thumb" alt="" src="${esc(urls[f.path])}">` : `<div class="ftype">${esc(typeLabel(f))}</div>`;
+    const by = f.created_by ? ` · ajoutée par ${esc(memberName(f.created_by))}` : "";
+    it.innerHTML = `${icon}<div class="grow"><div class="title">${esc(f.name)}</div>
+      <div class="meta">${esc(f.category || "")} · ${fmt(f.date)}${f.amount != null ? " · " + euro(f.amount) : ""}${by}</div></div>`;
+    if (level === 2){
+      const del = document.createElement("button"); del.className = "danger"; del.textContent = "Supprimer";
+      del.setAttribute("aria-label", "Supprimer " + f.name);
+      del.onclick = async ev => {
+        ev.stopPropagation();
+        if (await askConfirm(`Supprimer « ${f.name} » pour tous les membres ?`)){
+          try { await q(sb.from("documents").delete().eq("id", f.id)); removeFiles([f.path]); toast("Facture supprimée"); } catch(e){}
+          renderDocs();
+        }
+      };
+      it.append(del);
+    }
+    it.onclick = () => openDocViewer(f);
+    it.onkeydown = ev => { if (ev.key === "Enter") openDocViewer(f); };
+    list.append(it);
+  });
+}
+async function openDocViewer(f){
+  $("#viewerTitle").textContent = f.name;
+  $("#viewerBody").innerHTML = `<p class="muted">Chargement…</p>`;
+  $("#viewerActions").innerHTML = "";
+  openSheet("#viewer");
+  let blob;
+  try { blob = await downloadBlob(f.path); } catch(e){ closeSheet($("#viewer")); return; }
+  if ($("#viewer").hidden) return;
+  blob = new Blob([blob], { type: f.mime || blob.type || "application/octet-stream" });
+  viewerUrl = URL.createObjectURL(blob);
+  const body = $("#viewerBody"); body.innerHTML = "";
+  const t = f.mime || "";
+  if (t.startsWith("image/")){
+    const img = new Image(); img.className = "full"; img.src = viewerUrl; img.alt = f.name; body.append(img);
+  } else if (t === "application/pdf"){
+    const fr = document.createElement("iframe"); fr.src = viewerUrl; fr.title = f.name; body.append(fr);
+    const p = document.createElement("p"); p.className = "muted"; p.style.fontSize = ".88rem";
+    p.textContent = "Si le PDF ne s’affiche pas ici (fréquent sur Android), utilisez « Ouvrir » ci-dessous.";
+    body.append(p);
+  } else if (t.startsWith("text/") || /\.(txt|csv|md)$/i.test(f.name)){
+    const pre = document.createElement("pre"); pre.textContent = await blob.text(); body.append(pre);
+  } else {
+    body.innerHTML = `<p class="muted">Ce type de document ne peut pas être affiché directement. Ouvrez-le ou téléchargez-le avec les boutons ci-dessous.</p>`;
+  }
+  $("#viewerActions").innerHTML =
+    `<a class="ghost" href="${viewerUrl}" target="_blank" rel="noopener">Ouvrir</a>
+     <a class="primary" href="${viewerUrl}" download="${esc(f.name)}">Télécharger</a>`;
+}
+
+/* ---------- Soins ---------- */
+const DOSE_NAMES = { 1:["Dose"], 2:["Matin","Soir"], 3:["Matin","Midi","Soir"] };
+const careStatus = (t, today) => today < t.start ? "soon" : today > t.end ? "off" : "on";
+let treatments = [];
+async function loadCare(){
+  const rows = await q(sb.from("treatments").select("*, treatment_doses(date,slot,given_by,given_at)").eq("horse_id", cur.id));
+  treatments = rows.map(t => {
+    const taken = {};
+    (t.treatment_doses || []).forEach(d => { (taken[d.date] = taken[d.date] || [])[d.slot] = { by:d.given_by, at:d.given_at }; });
+    return { id:t.id, name:t.name, start:t.start_date, end:t.end_date, freq:t.freq, created_by:t.created_by, taken };
+  });
+}
+onSubmit("#careForm", async () => {
+  const start = $("#careStart").value, end = $("#careEnd").value;
+  if (end < start){ toast("La date de fin doit être après la date de début"); return; }
+  await q(sb.from("treatments").insert({ horse_id: cur.id, name: $("#careName").value.trim(), start_date: start, end_date: end, freq: +$("#careFreq").value }));
+  $("#careName").value = ""; toast("Traitement ajouté"); renderCare();
+});
+$("#careStart").addEventListener("change", () => {
+  if (!$("#careEnd").value || $("#careEnd").value < $("#careStart").value) $("#careEnd").value = $("#careStart").value;
+});
+function treatProgress(t){
+  const today = todayISO(), n = daysBetween(t.start, t.end) + 1;
+  let done = 0, missed = 0;
+  for (let i = 0; i < n; i++){
+    const k = iso(addDays(parse(t.start), i)), arr = t.taken[k] || [];
+    for (let j = 0; j < t.freq; j++){ if (arr[j]) done++; else if (k < today) missed++; }
+  }
+  return { done, missed, total: n * t.freq };
+}
+// Case à cocher d’une dose, avec le nom de la personne qui l’a donnée
+function doseChip(t, k, j, label, disabled, onChange){
+  const l = document.createElement("label"); l.className = "dose";
+  const cb = document.createElement("input"); cb.type = "checkbox"; cb.disabled = disabled;
+  const txt = document.createElement("span"), who = document.createElement("small");
+  const paint = () => {
+    const g = (t.taken[k] || [])[j];
+    cb.checked = !!g; txt.textContent = label;
+    who.textContent = g ? ` · ${memberName(g.by).split(" ")[0]} ${fmtHour(g.at)}` : "";
+    l.title = g ? `Donnée par ${memberName(g.by)} le ${fmtStamp(g.at)}` : "";
+  };
+  cb.setAttribute("aria-label", `${label}, ${fmt(k, {weekday:"long", day:"numeric", month:"long"})}`);
+  cb.addEventListener("change", async () => {
+    const checked = cb.checked;
+    try {
+      if (checked){
+        await q(sb.from("treatment_doses").upsert({ treatment_id:t.id, horse_id:cur.id, date:k, slot:j, given_by:user.id, given_at:new Date().toISOString() }, { onConflict:"treatment_id,date,slot" }));
+        (t.taken[k] = t.taken[k] || [])[j] = { by:user.id, at:new Date().toISOString() };
+      } else {
+        await q(sb.from("treatment_doses").delete().match({ treatment_id:t.id, date:k, slot:j }));
+        if (t.taken[k]) t.taken[k][j] = null;
+      }
+    } catch(e){}
+    paint(); if (onChange) onChange();
+  });
+  paint();
+  l.append(cb, txt, who);
+  return l;
+}
+async function renderCare(){
+  const horse = cur;
+  try { await loadCare(); } catch(e){ return; }
+  if (cur !== horse) return;
+  drawCare();
+}
+function drawCare(){
+  const today = todayISO(), ro = level < 2;
+  const active = treatments.filter(t => careStatus(t, today) === "on");
+  const td = $("#todayDoses"); td.innerHTML = "";
+  if (!active.length) td.innerHTML = `<div class="empty">Aucun traitement en cours aujourd’hui.</div>`;
+  active.forEach(t => {
+    const it = document.createElement("div"); it.className = "item";
+    it.innerHTML = `<div class="grow"><div class="title">${esc(t.name)}</div>
+      <div class="meta">Jour ${daysBetween(t.start, today) + 1} sur ${daysBetween(t.start, t.end) + 1}</div>
+      <div class="doses"></div></div>`;
+    const box = it.querySelector(".doses");
+    DOSE_NAMES[t.freq].forEach((label, j) => box.append(doseChip(t, today, j, label, ro, () => {
+      const arr = t.taken[today] || [];
+      if (DOSE_NAMES[t.freq].every((_, x) => arr[x])) toast("Toutes les doses du jour sont données");
+      drawCareList();
+    })));
+    td.append(it);
+  });
+  drawCareList();
+}
+function drawCareList(){
+  const today = todayISO(), order = { on:0, soon:1, off:2 };
+  const all = [...treatments].sort((a, b) => order[careStatus(a,today)] - order[careStatus(b,today)] || b.start.localeCompare(a.start));
+  const list = $("#careList"); list.innerHTML = "";
+  if (!all.length){ list.innerHTML = `<div class="empty">Aucun traitement enregistré.</div>`; return; }
+  const pillText = { on:"En cours", soon:"À venir", off:"Terminé" };
+  all.forEach(t => {
+    const st = careStatus(t, today), pr = treatProgress(t);
+    const it = document.createElement("div"); it.className = "item clickable"; it.tabIndex = 0;
+    it.innerHTML = `<div class="grow"><div class="title">${esc(t.name)}<span class="pill ${st}">${pillText[st]}</span></div>
+      <div class="meta">Du ${fmt(t.start, {day:"numeric",month:"short"})} au ${fmt(t.end)} · ${t.freq} fois par jour · ${pr.done}/${pr.total} doses</div></div>`;
+    it.onclick = () => openTreatment(t);
+    it.onkeydown = ev => { if (ev.key === "Enter") openTreatment(t); };
+    if (level === 2){
+      const del = document.createElement("button"); del.className = "danger"; del.textContent = "Supprimer";
+      del.onclick = async ev => {
+        ev.stopPropagation();
+        if (await askConfirm(`Supprimer le traitement « ${t.name} » et son suivi pour tous les membres ?`)){
+          try { await q(sb.from("treatments").delete().eq("id", t.id)); toast("Traitement supprimé"); } catch(e){}
+          renderCare();
+        }
+      };
+      it.append(del);
+    }
+    list.append(it);
+  });
+}
+function openTreatment(t){
+  const today = todayISO(), n = daysBetween(t.start, t.end) + 1, labels = DOSE_NAMES[t.freq], ro = level < 2;
+  $("#viewerTitle").textContent = t.name;
+  const body = $("#viewerBody"); body.innerHTML = "";
+  const info = document.createElement("p"); info.className = "muted"; info.style.margin = "0 0 6px";
+  info.textContent = `Du ${fmt(t.start)} au ${fmt(t.end)} · ${t.freq} fois par jour` + (t.created_by ? ` · ajouté par ${memberName(t.created_by)}` : "");
+  const prog = document.createElement("p"); prog.className = "progress";
+  const updateProg = () => {
+    const p = treatProgress(t);
+    prog.innerHTML = `<strong>${p.done} sur ${p.total} doses données</strong>` +
+      (p.missed ? ` · <span class="missed">${plural(p.missed, "dose oubliée", "doses oubliées")}</span>` : "");
+  };
+  const rows = document.createElement("div"); rows.className = "track";
+  for (let i = 0; i < n; i++){
+    const k = iso(addDays(parse(t.start), i)), future = k > today;
+    const row = document.createElement("div");
+    row.className = "track-row" + (k === today ? " today" : "") + (future ? " future" : "");
+    row.innerHTML = `<div class="tdate"><strong>${cap(fmt(k, {weekday:"long", day:"numeric", month:"short"}))}${k === today ? " · aujourd’hui" : ""}</strong>
+      <span>Jour ${i + 1} sur ${n}</span></div><div class="doses"></div>`;
+    const box = row.querySelector(".doses");
+    labels.forEach((label, j) => box.append(doseChip(t, k, j, label, future || ro, () => { updateProg(); drawCare(); })));
+    rows.append(row);
+  }
+  updateProg();
+  body.append(info, prog, rows);
+  $("#viewerActions").innerHTML = `<button class="primary" type="button" data-close>Fermer</button>`;
+  openSheet("#viewer");
+  const tr = rows.querySelector(".today");
+  if (tr) setTimeout(() => tr.scrollIntoView({block:"center"}), 60);
+}
+
+/* ---------- Maréchal ---------- */
+const nextShoe = (date, weeks) => iso(addDays(parse(date), weeks * 7));
+let shoeings = [];
+function updatePreview(){
+  const d = $("#shoeDate").value, n = parseInt($("#shoeInterval").value, 10);
+  $("#shoePreview").textContent = d && n > 0
+    ? `Prochaine ferrure prévue le ${fmt(nextShoe(d, n), {weekday:"long", day:"numeric", month:"long", year:"numeric"})}.`
+    : "Indiquez la date et l’intervalle pour calculer la prochaine ferrure.";
+}
+$("#shoeDate").addEventListener("input", updatePreview);
+$("#shoeInterval").addEventListener("input", updatePreview);
+onSubmit("#farrierForm", async () => {
+  const n = parseInt($("#shoeInterval").value, 10); if (!(n > 0)) return;
+  await q(sb.from("shoeings").insert({ horse_id: cur.id, date: $("#shoeDate").value, interval_weeks: n, note: $("#shoeNote").value.trim() || null }));
+  $("#shoeNote").value = ""; toast("Ferrure enregistrée"); renderFarrier();
+});
+async function renderFarrier(){
+  const horse = cur;
+  try { shoeings = await q(sb.from("shoeings").select("*").eq("horse_id", horse.id).order("date", {ascending:false})); } catch(e){ return; }
+  if (cur !== horse) return;
+  const last = shoeings[0], box = $("#farrierStatus");
+  if (!last){
+    box.innerHTML = `<div class="empty">Aucune ferrure enregistrée.</div>`;
+  } else {
+    const next = nextShoe(last.date, last.interval_weeks), left = daysBetween(todayISO(), next);
+    let status, color;
+    if (left < 0){ status = `En retard de ${plural(-left, "jour", "jours")}`; color = "var(--alert)"; }
+    else if (left === 0){ status = "C’est aujourd’hui"; color = "var(--warn)"; }
+    else if (left <= 7){ status = `Dans ${plural(left, "jour", "jours")} — pensez à appeler le maréchal`; color = "var(--warn)"; }
+    else { status = `Dans ${plural(left, "jour", "jours")}`; color = "var(--accent)"; }
+    box.innerHTML = `<div class="horseshoe" style="--c:${color}">
+      <div class="big">${cap(fmt(next, {weekday:"long", day:"numeric", month:"long"}))}</div>
+      <div class="status">${status}</div>
+      <dl><dt>Dernière ferrure</dt><dd>${fmt(last.date)}</dd>
+      <dt>Intervalle</dt><dd>${plural(last.interval_weeks, "semaine", "semaines")}</dd></dl></div>`;
+  }
+  if (!$("#shoeInterval").value) $("#shoeInterval").value = last ? last.interval_weeks : 6;
+  updatePreview();
+  const list = $("#shoeList"); list.innerHTML = "";
+  if (!shoeings.length){ list.innerHTML = `<div class="empty">L’historique apparaîtra ici.</div>`; return; }
+  shoeings.forEach(s => {
+    const it = document.createElement("div"); it.className = "item";
+    const by = s.created_by ? ` · saisie par ${esc(memberName(s.created_by))}` : "";
+    it.innerHTML = `<div class="grow"><div class="title">${fmt(s.date)}</div>
+      <div class="meta">Intervalle ${plural(s.interval_weeks, "semaine", "semaines")}${s.note ? " · " + esc(s.note) : ""}${by}</div></div>`;
+    if (level === 2){
+      const del = document.createElement("button"); del.className = "danger"; del.textContent = "Supprimer";
+      del.onclick = async () => {
+        if (await askConfirm("Supprimer cette ferrure de l’historique ?")){
+          try { await q(sb.from("shoeings").delete().eq("id", s.id)); } catch(e){}
+          renderFarrier();
+        }
+      };
+      it.append(del);
+    }
+    list.append(it);
+  });
+}
+
+/* ---------- Photos ---------- */
+onSubmit("#photoForm", async () => {
+  const files = [...$("#photoFile").files]; if (!files.length) return;
+  const btn = $("#photoForm [data-submit]"); btn.textContent = "Envoi en cours…";
+  try {
+    for (const file of files){
+      const blob = await resizeImage(file, 2000, 0.85);
+      const f = blob === file ? file : new File([blob], (file.name || "photo").replace(/\.\w+$/, "") + ".jpg", { type:"image/jpeg" });
+      await addDocument(f, "photo", { date: $("#photoDate").value, caption: $("#photoCaption").value.trim() || null });
+    }
+    $("#photoFile").value = ""; $("#photoCaption").value = "";
+    toast(files.length > 1 ? `${files.length} photos ajoutées` : "Photo ajoutée");
+  } finally { btn.textContent = "Ajouter les photos"; renderPhotos(); }
+});
+async function renderPhotos(){
+  const horse = cur;
+  let all;
+  try { all = await q(sb.from("documents").select("*").eq("horse_id", horse.id).eq("kind", "photo").order("date", {ascending:false}).order("created_at", {ascending:false})); }
+  catch(e){ return; }
+  if (cur !== horse) return;
+  const wrap = $("#galleryWrap"); wrap.innerHTML = "";
+  if (!all.length){ wrap.innerHTML = `<h2>Galerie</h2><div class="empty">Aucune photo de ${esc(cur.name)} pour l’instant.</div>`; return; }
+  const urls = await signedUrls(all.map(p => p.path));
+  const groups = {};
+  all.forEach(p => { const k = p.date.slice(0, 7); (groups[k] = groups[k] || []).push(p); });
+  Object.entries(groups).forEach(([k, items]) => {
+    const h = document.createElement("h3");
+    h.textContent = cap(parse(k + "-01").toLocaleDateString("fr-FR", {month:"long", year:"numeric"}));
+    const g = document.createElement("div"); g.className = "gallery";
+    items.forEach(p => {
+      const b = document.createElement("button"); b.type = "button";
+      b.setAttribute("aria-label", p.caption || ("Photo du " + fmt(p.date)));
+      b.innerHTML = `<img alt="" loading="lazy" src="${esc(urls[p.path] || "")}">`;
+      b.onclick = () => openPhotoViewer(p);
+      g.append(b);
+    });
+    wrap.append(h, g);
+  });
+}
+async function openPhotoViewer(p){
+  $("#viewerTitle").textContent = p.caption || cur.name;
+  $("#viewerBody").innerHTML = `<p class="muted">Chargement…</p>`;
+  $("#viewerActions").innerHTML = "";
+  openSheet("#viewer");
+  let blob;
+  try { blob = await downloadBlob(p.path); } catch(e){ closeSheet($("#viewer")); return; }
+  if ($("#viewer").hidden) return;
+  viewerUrl = URL.createObjectURL(blob);
+  const by = p.created_by ? ` · ajoutée par ${esc(memberName(p.created_by))}` : "";
+  $("#viewerBody").innerHTML = `<img class="full" alt="${esc(p.caption || "")}" src="${viewerUrl}">
+    <div class="caption"><div class="meta">${fmt(p.date, {weekday:"long", day:"numeric", month:"long", year:"numeric"})}${by}</div></div>`;
+  const fname = `${cur.name}-${p.date}.jpg`.replace(/[^\wÀ-ÿ.-]+/g, "-");
+  $("#viewerActions").innerHTML = (level === 2 ? `<button class="ghost" type="button" id="delPhoto" style="color:var(--alert)">Supprimer</button>` : "") +
+    `<a class="primary" href="${viewerUrl}" download="${esc(fname)}">Télécharger</a>`;
+  if (level === 2) $("#delPhoto").onclick = async () => {
+    if (!(await askConfirm("Supprimer cette photo pour tous les membres ?"))) return;
+    try { await q(sb.from("documents").delete().eq("id", p.id)); removeFiles([p.path]); toast("Photo supprimée"); } catch(e){}
+    closeSheet($("#viewer")); renderPhotos();
+  };
+}
+
+/* ---------- Mon compte ---------- */
+$("#openAccount").onclick = () => {
+  $("#accountInfo").textContent = `${user.email} · ${ROLES[me.role]}${me.is_admin ? " · administrateur" : ""} · ${org.name}`;
+  $("#myName").value = me.display_name;
+  $("#importBlock").hidden = !me.is_admin;
+  openSheet("#accountSheet");
+};
+onSubmit("#nameForm", async () => {
+  await q(sb.rpc("set_my_name", { p_name: $("#myName").value.trim() }));
+  await loadMe(); renderHome(); toast("Nom enregistré");
+});
+onSubmit("#passwordForm", async () => {
+  await q(sb.auth.updateUser({ password: $("#newPassword").value }));
+  $("#newPassword").value = ""; toast("Mot de passe modifié");
+});
+
+/* ---------- Membres et droits (administrateurs) ---------- */
+let invitations = [], allAccess = [], personMode = null, personId = null;
+async function refreshMembers(){
+  const [ms, inv, acc] = await Promise.all([
+    q(sb.from("members").select("*").eq("org_id", org.id).order("display_name")),
+    q(sb.from("invitations").select("*").eq("org_id", org.id).is("accepted_at", null).order("created_at")),
+    q(sb.from("horse_access").select("member_id,horse_id,level"))
+  ]);
+  members = ms; invitations = inv; allAccess = acc;
+}
+function accessSummary(isAdmin, all, list){
+  if (isAdmin) return "Administrateur · tous les chevaux";
+  if (all === "edit") return "Éditeur sur tous les chevaux";
+  const edit = list.filter(a => a.level === "edit").length, read = list.filter(a => a.level === "read").length;
+  const parts = [];
+  if (all === "read") parts.push("Lecture sur tous les chevaux");
+  if (edit) parts.push(`éditeur sur ${plural(edit, "cheval", "chevaux")}`);
+  if (read && all !== "read") parts.push(`lecture sur ${plural(read, "cheval", "chevaux")}`);
+  return parts.length ? cap(parts.join(", ")) : "Aucun cheval";
+}
+function drawMembers(){
+  const pw = $("#pendingWrap"); pw.innerHTML = "";
+  if (invitations.length){
+    const h = document.createElement("h3"); h.textContent = "Invitations en attente"; pw.append(h);
+    const list = document.createElement("div"); list.className = "list";
+    invitations.forEach(inv => {
+      const it = document.createElement("div"); it.className = "item";
+      it.innerHTML = `<div class="grow"><div class="title">${esc(inv.display_name)}<span class="badge read">En attente</span></div>
+        <div class="meta">${esc(inv.email)} · ${ROLES[inv.role]} · ${esc(accessSummary(inv.is_admin, inv.all_horses, inv.horse_access || []))}</div></div>`;
+      const del = document.createElement("button"); del.className = "danger"; del.textContent = "Annuler";
+      del.onclick = async () => {
+        if (!(await askConfirm(`Annuler l’invitation de ${inv.display_name} ?`, "Annuler l’invitation"))) return;
+        try { await q(sb.from("invitations").delete().eq("id", inv.id)); } catch(e){}
+        await refreshMembers(); drawMembers();
+      };
+      it.append(del); list.append(it);
+    });
+    pw.append(list);
+  }
+  const ml = $("#memberList"); ml.innerHTML = "";
+  members.forEach(m => {
+    const it = document.createElement("div"); it.className = "item clickable"; it.tabIndex = 0;
+    const acc = allAccess.filter(a => a.member_id === m.id);
+    it.innerHTML = `<div class="grow"><div class="title">${esc(m.display_name)}${m.user_id === user.id ? " (vous)" : ""}${m.is_admin ? `<span class="badge">Admin</span>` : ""}</div>
+      <div class="meta">${ROLES[m.role]} · ${esc(accessSummary(m.is_admin, m.all_horses, acc))}</div></div><span class="muted" aria-hidden="true">›</span>`;
+    it.onclick = () => openPerson("edit", m);
+    it.onkeydown = ev => { if (ev.key === "Enter") openPerson("edit", m); };
+    ml.append(it);
+  });
+}
+$("#openMembers").onclick = async () => {
+  $("#inviteDone").hidden = true;
+  try { await refreshMembers(); } catch(e){ return; }
+  drawMembers(); openSheet("#membersSheet");
+};
+$("#newInvite").onclick = () => openPerson("invite", null);
+
+function drawPersonHorses(levels){
+  const box = $("#pHorses"); box.innerHTML = "";
+  if (!horses.length){ box.innerHTML = `<p class="muted" style="margin:0;font-size:.9rem">Aucun cheval dans la structure pour l’instant.</p>`; return; }
+  horses.forEach(h => {
+    const row = document.createElement("label"); row.className = "access-row";
+    row.innerHTML = `<span>${esc(h.name)}</span><select data-horse="${h.id}">
+      <option value="">Aucun accès</option><option value="read">Lecture</option><option value="edit">Éditeur</option></select>`;
+    row.querySelector("select").value = levels[h.id] || "";
+    box.append(row);
+  });
+}
+function readPersonHorses(){
+  return [...document.querySelectorAll("#pHorses select")].filter(s => s.value).map(s => ({ horse_id: s.dataset.horse, level: s.value }));
+}
+function updatePersonForm(){
+  const admin = $("#pAdmin").checked, all = $("#pAll").value;
+  $("#pAll").disabled = admin;
+  if (admin) $("#pAll").value = "edit";
+  const hideHorses = admin || $("#pAll").value === "edit";
+  $("#pHorsesWrap").hidden = hideHorses;
+  $("#pHorsesHint").textContent = all === "read"
+    ? "Lecture sur tous les chevaux ; vous pouvez passer certains chevaux en « Éditeur » :"
+    : (ROLE_DEFAULTS[$("#pRole").value].hint || "Accès cheval par cheval :");
+}
+$("#pRole").addEventListener("change", () => {
+  const d = ROLE_DEFAULTS[$("#pRole").value];
+  if (!$("#pAdmin").disabled) $("#pAdmin").checked = d.admin;
+  $("#pAll").value = d.all;
+  updatePersonForm();
+});
+$("#pAdmin").addEventListener("change", updatePersonForm);
+$("#pAll").addEventListener("change", updatePersonForm);
+function openPerson(mode, m){
+  personMode = mode; personId = m ? m.id : null;
+  const self = m && m.user_id === user.id;
+  $("#personTitle").textContent = mode === "invite" ? "Inviter une personne" : m.display_name;
+  $("#personSubmit").textContent = mode === "invite" ? "Créer l’invitation" : "Enregistrer";
+  $("#pName").value = m ? m.display_name : "";
+  $("#pEmailWrap").hidden = mode !== "invite"; $("#pEmail").required = mode === "invite"; $("#pEmail").value = "";
+  $("#pEmailText").hidden = mode === "invite"; $("#pEmailText").textContent = m ? m.email : "";
+  $("#pRole").value = m ? m.role : "cavalier";
+  $("#pAdmin").checked = m ? m.is_admin : false;
+  $("#pAdmin").disabled = !!self;   // on ne peut pas se retirer ses propres droits d’administrateur
+  $("#pAll").value = m ? m.all_horses : ROLE_DEFAULTS.cavalier.all;
+  const levels = {};
+  if (m) allAccess.filter(a => a.member_id === m.id).forEach(a => { levels[a.horse_id] = a.level; });
+  drawPersonHorses(levels);
+  $("#removeMember").hidden = mode === "invite" || self;
+  updatePersonForm();
+  openSheet("#personSheet");
+}
+onSubmit("#personForm", async () => {
+  const isAdmin = $("#pAdmin").checked, all = isAdmin ? "edit" : $("#pAll").value;
+  const access = (isAdmin || all === "edit") ? [] : readPersonHorses().filter(a => !(all === "read" && a.level === "read"));
+  const fields = { display_name: $("#pName").value.trim(), role: $("#pRole").value, is_admin: isAdmin, all_horses: all };
+  if (personMode === "invite"){
+    const email = $("#pEmail").value.trim().toLowerCase();
+    if (members.some(m => m.email === email)){ toast("Cette personne fait déjà partie de la structure"); return; }
+    await q(sb.from("invitations").insert({ org_id: org.id, email, ...fields, horse_access: access }));
+    closeSheet($("#personSheet"));
+    const done = $("#inviteDone");
+    done.innerHTML = `<p style="margin:0 0 10px"><strong>Invitation prête pour ${esc(fields.display_name)}.</strong> Envoyez-lui le lien de l’application : elle devra créer son compte avec l’adresse <strong>${esc(email)}</strong>. Ses accès s’activeront automatiquement à sa première connexion.</p>
+      <button class="primary" type="button" id="shareLink" style="width:100%">Partager le lien de l’application</button>`;
+    done.hidden = false;
+    $("#shareLink").onclick = async () => {
+      const text = `Bonjour ${fields.display_name}, voici l’application de suivi des chevaux de ${org.name}. Créez votre compte avec l’adresse ${email} :`;
+      try {
+        if (navigator.share){ await navigator.share({ title:"Suivi cheval", text, url: appUrl() }); return; }
+      } catch(e){ if (e.name === "AbortError") return; }
+      try { await navigator.clipboard.writeText(`${text} ${appUrl()}`); toast("Message et lien copiés"); }
+      catch(e){ toast(appUrl(), 6000); }
+    };
+  } else {
+    await q(sb.from("members").update(fields).eq("id", personId));
+    await q(sb.from("horse_access").delete().eq("member_id", personId));
+    if (access.length) await q(sb.from("horse_access").insert(access.map(a => ({ member_id: personId, ...a }))));
+    closeSheet($("#personSheet")); toast("Accès enregistrés");
+  }
+  await refreshMembers(); drawMembers();
+  await loadMe();
+});
+$("#removeMember").onclick = async () => {
+  const m = members.find(x => x.id === personId);
+  if (!(await askConfirm(`Retirer ${m.display_name} de la structure ? La personne n’aura plus accès à aucun cheval. Ses saisies passées sont conservées.`, "Retirer"))) return;
+  try { await q(sb.from("members").delete().eq("id", m.id)); toast(`${m.display_name} a été retiré(e)`); } catch(e){ return; }
+  closeSheet($("#personSheet")); await refreshMembers(); drawMembers();
+};
+
+/* ---------- Reprise d’une sauvegarde de la version locale ---------- */
+function b64ToBlob(b64, type){
+  const s = atob(b64), b = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+  return new Blob([b], { type: type || "application/octet-stream" });
+}
+$("#importLocal").addEventListener("change", async e => {
+  const file = e.target.files[0]; e.target.value = ""; if (!file) return;
+  let data;
+  try { data = JSON.parse(await file.text()); if (data.app !== "carnet-cheval") throw 0; }
+  catch(err){ toast("Ce fichier n’est pas une sauvegarde de Suivi cheval"); return; }
+  let hs, states, files;
+  if (data.version === 1){
+    hs = [{ id:"h1", name:(data.state && data.state.horse) || "Mon cheval", photo:null }];
+    states = { h1: data.state || {} };
+    files = (data.files || []).map(f => ({ ...f, horseId:"h1", kind:"invoice" }));
+  } else { hs = data.horses || []; states = data.states || {}; files = data.files || []; }
+  if (!hs.length){ toast("Aucun cheval dans cette sauvegarde"); return; }
+  if (!(await askConfirm(`Ajouter ${plural(hs.length, "cheval", "chevaux")} (${hs.map(h => h.name).join(", ")}) à ${org.name} ?`, "Importer"))) return;
+  closeSheet($("#accountSheet"));
+  try {
+    for (let i = 0; i < hs.length; i++){
+      const h = hs[i], st = states[h.id] || {};
+      showLoading(`Import de ${h.name} (${i + 1} sur ${hs.length})… Ne fermez pas l’application.`);
+      const row = await q(sb.from("horses").insert({ org_id: org.id, name: h.name, multi: !!h.multi }).select("id").single());
+      const hid = row.id;
+      if (h.photo && h.photo.data){
+        const path = `${hid}/profil-${Date.now()}.jpg`;
+        await uploadFile(path, b64ToBlob(h.photo.data, h.photo.type), h.photo.type);
+        await q(sb.from("horses").update({ photo_path: path }).eq("id", hid));
+      }
+      const riderMap = {};
+      const riders = (h.riders || []).map((r, j) => { riderMap[r.id] = newId(); return { id: riderMap[r.id], horse_id: hid, name: r.name, position: j }; });
+      if (riders.length) await q(sb.from("riders").insert(riders));
+      const days = {};
+      Object.entries(st.activities || {}).forEach(([k, a]) => { days[k] = { activity: a }; });
+      Object.entries(st.days || {}).forEach(([k, d]) => { days[k] = Object.assign(days[k] || {}, d); });
+      const dayRows = Object.entries(days).map(([k, d]) => ({ horse_id: hid, date: k, activity: d.activity || null,
+        rider_id: d.riderId ? (riderMap[d.riderId] || null) : null, note: d.note || null }));
+      for (let j = 0; j < dayRows.length; j += 500) await q(sb.from("days").upsert(dayRows.slice(j, j + 500)));
+      for (const t of st.treatments || []){
+        const tr = await q(sb.from("treatments").insert({ horse_id: hid, name: t.name, start_date: t.start, end_date: t.end, freq: t.freq }).select("id").single());
+        const doses = [];
+        Object.entries(t.taken || {}).forEach(([k, arr]) => (arr || []).forEach((v, slot) => { if (v && slot < t.freq) doses.push({ treatment_id: tr.id, horse_id: hid, date: k, slot }); }));
+        if (doses.length) await q(sb.from("treatment_doses").insert(doses));
+      }
+      const sh = (st.shoeing || []).map(s => ({ horse_id: hid, date: s.date, interval_weeks: s.interval, note: s.note || null }));
+      if (sh.length) await q(sb.from("shoeings").insert(sh));
+      const hf = files.filter(f => f.horseId === h.id);
+      for (let j = 0; j < hf.length; j++){
+        const f = hf[j];
+        showLoading(`Import de ${h.name} : fichier ${j + 1} sur ${hf.length}… Ne fermez pas l’application.`);
+        const kind = f.kind === "photo" ? "photo" : "invoice";
+        const path = `${hid}/${newId()}-${safeName(f.name)}`;
+        await uploadFile(path, b64ToBlob(f.data, f.type), f.type);
+        await q(sb.from("documents").insert({ horse_id: hid, kind, name: f.name, mime: f.type || null, size: f.size || null, path,
+          category: kind === "invoice" ? (f.cat || "Autre") : null, date: f.date || todayISO(),
+          amount: kind === "invoice" && f.amount != null ? f.amount : null, caption: kind === "photo" ? (f.caption || null) : null }));
+      }
+    }
+    toast("Import terminé", 3500);
+  } catch(err){
+    toast("L’import s’est arrêté : " + errMsg(err), 6000);
+  }
+  await loadHorses(); goHome();
+});
+
+/* ---------- Installation sur l’écran d’accueil ---------- */
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const IS_STANDALONE = navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+function showInstallTip(){
+  const box = $("#installTip");
+  let dismissed = false; try { dismissed = localStorage.getItem("installTipHidden") === "1"; } catch(e){}
+  if (IS_STANDALONE || dismissed || location.protocol !== "https:") return;
+  const msg = IS_IOS
+    ? "Pour l’avoir comme une vraie appli : touchez le bouton Partager <strong>⬆︎</strong> de Safari, puis <strong>« Sur l’écran d’accueil »</strong>."
+    : "Astuce : dans le menu du navigateur, choisissez <strong>« Ajouter à l’écran d’accueil »</strong> ou <strong>« Installer l’application »</strong>.";
+  box.innerHTML = `<p>${msg}</p><button type="button" aria-label="Masquer ce conseil">✕</button>`;
+  box.querySelector("button").onclick = () => { box.hidden = true; try { localStorage.setItem("installTipHidden","1"); } catch(e){} };
+  box.hidden = false;
+}
+
+/* ---------- Démarrage ---------- */
+(async function init(){
+  const t = todayISO();
+  ["#docDate","#careStart","#careEnd","#shoeDate","#photoDate"].forEach(id => { $(id).value = t; });
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY){ showScreen("configError"); return; }
+  if (!window.supabase){
+    $("#configMsg").textContent = "Impossible de charger l’application : vérifiez votre connexion internet puis rouvrez-la.";
+    showScreen("configError"); return;
+  }
+  const hash = new URLSearchParams(location.hash.slice(1));
+  const recovery = hash.get("type") === "recovery";
+  const linkError = hash.get("error_description");
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, flowType:"implicit" }
+  });
+  sb.auth.onAuthStateChange(event => {
+    if (event === "PASSWORD_RECOVERY") showAuthView("recovery");
+    if (event === "SIGNED_OUT"){ resetState(); showAuthView("login"); }
+  });
+  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+  showInstallTip();
+  showLoading();
+  const { data } = await sb.auth.getSession();
+  try { if (location.hash) history.replaceState(null, "", location.pathname + location.search); } catch(e){}
+  if (linkError) toast("Ce lien n’est plus valide. Recommencez la démarche.", 5000);
+  if (recovery && data.session){ showAuthView("recovery"); return; }
+  if (data.session) await afterLogin(); else showAuthView("login");
+})();
+
+</script>
+</body>
+</html>
