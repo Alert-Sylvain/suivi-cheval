@@ -153,6 +153,17 @@ label{display:grid;gap:4px;font-size:.9rem;color:var(--muted)}
 .gallery button{padding:0;border:none;background:var(--accent-soft);cursor:pointer;aspect-ratio:1;display:block}
 .gallery img{width:100%;height:100%;object-fit:cover;display:block}
 .caption{margin:12px 0 0;text-align:center}
+/* Carrousel photos */
+.car-wrap{position:relative;margin:0 -16px}
+.carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.carousel::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;scroll-snap-align:center;scroll-snap-stop:always;display:grid;place-items:center;padding:0 16px;min-height:52vh}
+.slide img{max-width:100%;max-height:62vh;border-radius:8px;object-fit:contain;display:block;background:var(--accent-soft)}
+.car-btn{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:1.4rem;cursor:pointer;display:grid;place-items:center;opacity:.9}
+.car-btn.prev{left:22px}.car-btn.next{right:22px}
+.car-btn[disabled]{opacity:0;pointer-events:none}
+@media (hover:none){.car-btn{display:none}}
+.car-count{font-weight:600;color:var(--ink);font-size:.9rem;margin-bottom:2px}
 .caption .meta{color:var(--muted);font-size:.86rem}
 
 /* Feuilles (visionneuse, formulaires) */
@@ -1434,32 +1445,72 @@ async function renderPhotos(){
       const b = document.createElement("button"); b.type = "button";
       b.setAttribute("aria-label", p.caption || ("Photo du " + fmt(p.date)));
       b.innerHTML = `<img alt="" loading="lazy" src="${esc(urls[p.path] || "")}">`;
-      b.onclick = () => openPhotoViewer(p);
+      b.onclick = () => openPhotoViewer(all, all.indexOf(p), urls);
       g.append(b);
     });
     wrap.append(h, g);
   });
 }
-async function openPhotoViewer(p){
-  $("#viewerTitle").textContent = p.caption || cur.name;
-  $("#viewerBody").innerHTML = `<p class="muted">Chargement…</p>`;
-  $("#viewerActions").innerHTML = "";
-  openSheet("#viewer");
-  let blob;
-  try { blob = await downloadBlob(p.path); } catch(e){ closeSheet($("#viewer")); return; }
-  if ($("#viewer").hidden) return;
-  viewerUrl = URL.createObjectURL(blob);
-  const by = p.created_by ? ` · ajoutée par ${esc(memberName(p.created_by))}` : "";
-  $("#viewerBody").innerHTML = `<img class="full" alt="${esc(p.caption || "")}" src="${viewerUrl}">
-    <div class="caption"><div class="meta">${fmt(p.date, {weekday:"long", day:"numeric", month:"long", year:"numeric"})}${by}</div></div>`;
-  const fname = `${cur.name}-${p.date}.jpg`.replace(/[^\wÀ-ÿ.-]+/g, "-");
-  $("#viewerActions").innerHTML = (level === 2 ? `<button class="ghost" type="button" id="delPhoto" style="color:var(--alert)">Supprimer</button>` : "") +
-    `<a class="primary" href="${viewerUrl}" download="${esc(fname)}">Télécharger</a>`;
-  if (level === 2) $("#delPhoto").onclick = async () => {
-    if (!(await askConfirm("Supprimer cette photo pour tous les membres ?"))) return;
-    try { await q(sb.from("documents").delete().eq("id", p.id)); removeFiles([p.path]); toast("Photo supprimée"); } catch(e){}
-    closeSheet($("#viewer")); renderPhotos();
+/* Visionneuse photos : on fait défiler les photos du doigt (ou avec les flèches) */
+let carKeyHandler = null;
+function openPhotoViewer(list, start, urls){
+  const n = list.length;
+  let idx = Math.max(0, start);
+  $("#viewerBody").innerHTML = `<div class="car-wrap"><div class="carousel" tabindex="0"></div>
+      <button class="car-btn prev" type="button" aria-label="Photo précédente">‹</button>
+      <button class="car-btn next" type="button" aria-label="Photo suivante">›</button></div>
+    <div class="caption"><div class="car-count"></div><div class="meta"></div></div>`;
+  const car = $("#viewerBody .carousel");
+  list.forEach((p, i) => {
+    const sl = document.createElement("div"); sl.className = "slide";
+    const img = document.createElement("img"); img.alt = p.caption || ""; img.dataset.src = urls[p.path] || "";
+    sl.append(img); car.append(sl);
+  });
+  const load = i => { const img = car.children[i] && car.children[i].querySelector("img"); if (img && !img.src && img.dataset.src) img.src = img.dataset.src; };
+  const show = i => {
+    idx = i; const p = list[i];
+    [i - 1, i, i + 1, i + 2].forEach(load);
+    $("#viewerTitle").textContent = p.caption || cur.name;
+    $("#viewerBody .car-count").textContent = n > 1 ? `${i + 1} / ${n}` : "";
+    const by = p.created_by ? ` · ajoutée par ${memberName(p.created_by)}` : "";
+    $("#viewerBody .caption .meta").textContent = fmt(p.date, {weekday:"long", day:"numeric", month:"long", year:"numeric"}) + by;
+    $("#viewerBody .car-btn.prev").disabled = i === 0;
+    $("#viewerBody .car-btn.next").disabled = i === n - 1;
+    $("#viewerActions").innerHTML = (level === 2 ? `<button class="ghost" type="button" id="delPhoto" style="color:var(--alert)">Supprimer</button>` : "") +
+      `<button class="primary" type="button" id="dlPhoto">Télécharger</button>`;
+    $("#dlPhoto").onclick = async () => {
+      const btn = $("#dlPhoto"); btn.disabled = true; btn.textContent = "Téléchargement…";
+      try {
+        const blob = await downloadBlob(p.path), u = URL.createObjectURL(blob), a = document.createElement("a");
+        a.href = u; a.download = `${cur.name}-${p.date}.jpg`.replace(/[^\wÀ-ÿ.-]+/g, "-");
+        document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000);
+      } catch(e){}
+      if (btn.isConnected){ btn.disabled = false; btn.textContent = "Télécharger"; }
+    };
+    if (level === 2) $("#delPhoto").onclick = async () => {
+      if (!(await askConfirm("Supprimer cette photo pour tous les membres ?"))) return;
+      try { await q(sb.from("documents").delete().eq("id", p.id)); removeFiles([p.path]); toast("Photo supprimée"); } catch(e){}
+      closeSheet($("#viewer")); renderPhotos();
+    };
   };
+  const goTo = (i, smooth = true) => { i = Math.max(0, Math.min(n - 1, i)); car.scrollTo({ left: i * car.clientWidth, behavior: smooth ? "smooth" : "auto" }); };
+  let raf = 0;
+  car.addEventListener("scroll", () => {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => { const i = Math.round(car.scrollLeft / Math.max(1, car.clientWidth)); if (i !== idx) show(i); });
+  }, { passive:true });
+  $("#viewerBody .car-btn.prev").onclick = () => goTo(idx - 1);
+  $("#viewerBody .car-btn.next").onclick = () => goTo(idx + 1);
+  if (carKeyHandler) document.removeEventListener("keydown", carKeyHandler);
+  carKeyHandler = e => {
+    if ($("#viewer").hidden || !car.isConnected){ document.removeEventListener("keydown", carKeyHandler); carKeyHandler = null; return; }
+    if (e.key === "ArrowLeft"){ e.preventDefault(); goTo(idx - 1); }
+    if (e.key === "ArrowRight"){ e.preventDefault(); goTo(idx + 1); }
+  };
+  document.addEventListener("keydown", carKeyHandler);
+  openSheet("#viewer");
+  show(idx);
+  requestAnimationFrame(() => goTo(idx, false));
 }
 
 /* ---------- Mon compte ---------- */
