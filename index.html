@@ -216,6 +216,29 @@ body.readonly .ro-hide{display:none !important}
 .dose small{color:var(--muted);font-size:.78rem}
 .center-msg{text-align:center;color:var(--muted);padding:60px 20px}
 .mt{margin-top:14px}
+
+/* Copier une semaine */
+.week-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.cal-head strong{font-family:var(--serif);font-size:1.15rem}
+.cal-head button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;cursor:pointer;min-width:44px}
+.cal-dow,.cal-week{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
+.cal-dow{font-size:.78rem;color:var(--muted);font-weight:600;padding:0 4px 6px}
+.cal-weeks{display:grid;gap:4px}
+.cal-week{border:1px solid transparent;border-radius:12px;background:none;padding:8px 4px;cursor:pointer;font:inherit;color:var(--ink);position:relative}
+.cal-week:hover{background:var(--accent-soft)}
+.cal-week span{padding:4px 0;font-size:.95rem}
+.cal-week span.out{color:var(--muted);opacity:.5}
+.cal-week span.today{font-weight:700;color:var(--accent);text-decoration:underline}
+.cal-week span.has::after{content:"";display:block;width:5px;height:5px;border-radius:50%;background:var(--warn);margin:2px auto 0}
+.cal-week.source{background:var(--warn-soft);border-color:var(--warn);cursor:not-allowed}
+.cal-week.source::before{content:"Semaine copiée";position:absolute;top:-8px;right:10px;font-size:.68rem;font-weight:700;background:var(--warn);color:#fff;border-radius:999px;padding:1px 8px}
+.cal-week.target{background:var(--accent);border-color:var(--accent)}
+.cal-week.target span{color:var(--on-accent)}
+.cal-week.target span.out{color:var(--on-accent);opacity:.65}
+.cal-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin:12px 4px 0}
+.cal-legend i{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-1px;margin-right:5px}
+.copy-info{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.92rem;margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -331,7 +354,7 @@ body.readonly .ro-hide{display:none !important}
         <button id="nextWeek" aria-label="Semaine suivante">›</button>
       </div>
       <div class="days" id="days"></div>
-      <div style="text-align:center;margin-top:10px"><button class="ghost" id="thisWeek">Revenir à cette semaine</button></div>
+      <div class="week-actions"><button class="ghost" id="thisWeek">Revenir à cette semaine</button><button class="ghost ro-hide" id="copyWeek">📋 Copier la semaine</button></div>
       <div class="summary panel" id="weekSummary" style="margin-top:14px"></div>
     </section>
 
@@ -530,6 +553,34 @@ body.readonly .ro-hide{display:none !important}
         <button class="primary" type="button" data-submit id="personSubmit">Créer l’invitation</button>
         <button class="danger-block" type="button" id="removeMember" hidden>Retirer ce membre de la structure</button>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- Copier une semaine -->
+<div class="overlay" id="copySheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="copyTitle">
+    <div class="sheet-head"><strong id="copyTitle">Coller la semaine sur…</strong><button class="icon-btn" data-close aria-label="Fermer">✕</button></div>
+    <div class="sheet-body">
+      <div class="copy-info" id="copyInfo"></div>
+      <div class="cal-head">
+        <button type="button" id="calPrev" aria-label="Mois précédent">‹</button>
+        <strong id="calMonth"></strong>
+        <button type="button" id="calNext" aria-label="Mois suivant">›</button>
+      </div>
+      <div class="cal-dow"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+      <div class="cal-weeks" id="calWeeks"></div>
+      <div class="cal-legend">
+        <span><i style="background:var(--warn-soft);border:1px solid var(--warn)"></i>Semaine copiée</span>
+        <span><i style="background:var(--accent)"></i>Semaine choisie</span>
+        <span><i style="background:var(--warn);border-radius:50%;width:7px;height:7px"></i>Jour déjà rempli</span>
+      </div>
+      <label class="check" style="margin-top:12px"><input type="checkbox" id="copyNotes"> Copier aussi les notes du jour</label>
+      <p class="muted" id="copyTargetText" style="margin:6px 0 0;font-size:.9rem">Touchez la semaine sur laquelle coller les activités.</p>
+    </div>
+    <div class="sheet-actions">
+      <button class="ghost" type="button" data-close>Annuler</button>
+      <button class="primary" type="button" id="copyPaste" disabled>Coller</button>
     </div>
   </div>
 </div>
@@ -1105,6 +1156,103 @@ function drawWeek(){
 $("#prevWeek").onclick = () => { weekStart = addDays(weekStart, -7); renderWeek(); };
 $("#nextWeek").onclick = () => { weekStart = addDays(weekStart, 7); renderWeek(); };
 $("#thisWeek").onclick = () => { weekStart = monday(new Date()); renderWeek(); };
+async function copyMarks(from, to){
+  const rows = await q(sb.from("days").select("date").eq("horse_id", cur.id).gte("date", from).lte("date", to));
+  return new Set(rows.map(r => r.date));
+}
+function copySourceDays(){ return weekDays; }
+async function pasteWeek(src, dst, withNotes){
+  const existing = {};
+  (await q(sb.from("days").select("*").eq("horse_id", cur.id).gte("date", iso(dst)).lte("date", iso(addDays(dst, 6))))).forEach(r => { existing[r.date] = r; });
+  const rows = [];
+  for (let i = 0; i < 7; i++){
+    const d = copyBuffer.days[i]; if (!d) continue;
+    const k = iso(addDays(dst, i)), ex = existing[k] || {};
+    const note = withNotes && d.note ? d.note : (ex.note || null);
+    rows.push({ horse_id: cur.id, date: k, activity: d.activity || null, rider_id: d.rider_id || null, note,
+      updated_by: user.id, updated_at: new Date().toISOString() });
+  }
+  if (rows.length) await q(sb.from("days").upsert(rows));
+  return rows.length;
+}
+/* ---------- Copier une semaine ---------- */
+let copyBuffer = null, calMonth = null, copyTarget = null;
+const shortRange = d => `${d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})} – ${addDays(d, 6).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})}`;
+$("#copyWeek").onclick = () => {
+  const src = copySourceDays(), days = [];
+  let count = 0;
+  for (let i = 0; i < 7; i++){
+    const d = src[iso(addDays(weekStart, i))];
+    if (d && (d.activity || d.rider_id || (d.note || "").trim())){ days[i] = { activity: d.activity || null, rider_id: d.rider_id || null, note: d.note || null }; if (d.activity) count++; }
+  }
+  if (!days.some(Boolean)){ toast("Cette semaine est vide : rien à copier"); return; }
+  copyBuffer = { start: weekStart, days };
+  copyTarget = null;
+  const acts = days.filter(d => d && d.activity).map(d => d.activity);
+  $("#copyInfo").innerHTML = `<strong>Semaine copiée : ${esc(shortRange(weekStart))}</strong><br>` +
+    (acts.length ? esc(acts.join(" · ")) : "Notes et cavalier(e)s uniquement");
+  $("#copyNotes").checked = false;
+  const next = addDays(weekStart, 7);
+  calMonth = new Date(next.getFullYear(), next.getMonth(), 1);
+  drawCalendar();
+  updateCopyTarget();
+  openSheet("#copySheet");
+};
+async function drawCalendar(){
+  const month = calMonth;
+  $("#calMonth").textContent = cap(month.toLocaleDateString("fr-FR", {month:"long", year:"numeric"}));
+  const first = monday(month), lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+  const weeks = []; for (let w = first; w <= lastDay; w = addDays(w, 7)) weeks.push(w);
+  let marks = new Set();
+  try { marks = await copyMarks(iso(weeks[0]), iso(addDays(weeks[weeks.length - 1], 6))); } catch(e){}
+  if (calMonth !== month) return;
+  const box = $("#calWeeks"); box.innerHTML = "";
+  const today = todayISO(), srcK = iso(copyBuffer.start);
+  weeks.forEach(w => {
+    const k = iso(w), isSrc = k === srcK;
+    const b = document.createElement("button"); b.type = "button";
+    b.className = "cal-week" + (isSrc ? " source" : "") + (copyTarget && iso(copyTarget) === k ? " target" : "");
+    b.setAttribute("aria-label", (isSrc ? "Semaine copiée, " : "Semaine du ") + shortRange(w));
+    if (isSrc) b.setAttribute("aria-disabled", "true");
+    for (let i = 0; i < 7; i++){
+      const d = addDays(w, i), dk = iso(d), sp = document.createElement("span");
+      sp.textContent = d.getDate();
+      if (d.getMonth() !== month.getMonth()) sp.classList.add("out");
+      if (dk === today) sp.classList.add("today");
+      if (marks.has(dk) && !isSrc) sp.classList.add("has");
+      b.append(sp);
+    }
+    b.onclick = () => {
+      if (isSrc){ toast("C’est la semaine copiée : choisissez-en une autre"); return; }
+      copyTarget = w; updateCopyTarget();
+      box.querySelectorAll(".cal-week").forEach(x => x.classList.remove("target")); b.classList.add("target");
+    };
+    box.append(b);
+  });
+}
+function updateCopyTarget(){
+  $("#copyPaste").disabled = !copyTarget;
+  $("#copyTargetText").textContent = copyTarget
+    ? `Les activités seront collées sur la semaine du ${shortRange(copyTarget)}. Les jours vides de la semaine copiée ne modifient rien.`
+    : "Touchez la semaine sur laquelle coller les activités.";
+}
+$("#calPrev").onclick = () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); drawCalendar(); };
+$("#calNext").onclick = () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); drawCalendar(); };
+$("#copyPaste").onclick = async () => {
+  if (!copyTarget || iso(copyTarget) === iso(copyBuffer.start)) return;
+  const btn = $("#copyPaste"); btn.disabled = true; btn.textContent = "Collage…";
+  try {
+    const marks = await copyMarks(iso(copyTarget), iso(addDays(copyTarget, 6)));
+    const overwrite = copyBuffer.days.some((d, i) => d && marks.has(iso(addDays(copyTarget, i))));
+    if (overwrite && !(await askConfirm(`Certains jours de la semaine du ${shortRange(copyTarget)} sont déjà remplis : leurs activités seront remplacées. Continuer ?`, "Remplacer"))) return;
+    const n = await pasteWeek(copyBuffer.start, copyTarget, $("#copyNotes").checked);
+    closeSheet($("#copySheet"));
+    weekStart = copyTarget; renderWeek();
+    toast(`${plural(n, "jour collé", "jours collés")} sur la semaine du ${shortRange(copyTarget)}`, 3500);
+  } catch(e){}
+  finally { btn.disabled = !copyTarget; btn.textContent = "Coller"; }
+};
+
 
 /* ---------- Factures ---------- */
 let docFilter = "Toutes";
