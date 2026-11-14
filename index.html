@@ -548,10 +548,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_gHCI0yH3eKmwUaeNbVnKlw_LNWEjZ-j";
 
 const BUCKET = "fichiers";
 const ACTIVITIES = [
-  ["Dressage","#4C6FA8"],["CSO","#C0563A"],["Cross","#7D8A2E"],["Concours","#3B428C"],["Mise en selle","#8A5FA8"],
-  ["Balade au pas","#3C8FA0"],["Trotting","#D19A22"],["Longe","#6B7C8F"],["TAP","#B04F7A"],
-  ["Barre au sol","#8C6A40"],["Stretching","#5E9FB8"],["Club","#C2703D"],["Repos","#B5AA9C"]
+  ["Balade","#3C8FA0"],["Barre au sol","#8C6A40"],["Club","#C2703D"],["Concours","#3B428C"],["Cross","#7D8A2E"],
+  ["CSO","#C0563A"],["Dressage","#4C6FA8"],["Longe","#6B7C8F"],["Mise en selle","#8A5FA8"],["Piste de galop","#2F7A55"],
+  ["Repos","#B5AA9C"],["Stretching","#5E9FB8"],["TAP","#B04F7A"],["TREC","#A0522D"],["Trotting","#D19A22"]
 ];
+// Anciens intitulés conservés dans les données déjà saisies
+const ACTIVITY_ALIASES = { "Balade au pas":"Balade" };
+const normAct = a => ACTIVITY_ALIASES[a] || a;
 const DOC_CATS = ["Vétérinaire","Maréchal","Dentiste","Ostéopathe","Alimentation","Pension","Autre"];
 const ROLES = { gerant:"Gérant(e)", salarie:"Salarié(e)", proprietaire:"Propriétaire", demi_pension:"Demi-pension", cavalier:"Cavalier(e)" };
 const ROLE_DEFAULTS = {
@@ -1029,7 +1032,7 @@ async function renderWeek(){
   try {
     const rows = await q(sb.from("days").select("*").eq("horse_id", horse.id).gte("date", from).lte("date", to));
     if (cur !== horse || iso(weekStart) !== from) return;
-    weekDays = {}; rows.forEach(r => { weekDays[r.date] = r; });
+    weekDays = {}; rows.forEach(r => { if (r.activity) r.activity = normAct(r.activity); weekDays[r.date] = r; });
   } catch(e){ return; }
   drawWeek();
 }
