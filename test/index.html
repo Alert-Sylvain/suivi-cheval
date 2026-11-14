@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F2EADC">
+<title>Suivi cheval</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Suivi cheval">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐴</text></svg>">
+<style>
+:root{
+  --bg:#F2EADC; --surface:#FBF7EF; --ink:#2E241B; --muted:#76685A; --line:#E0D4C0;
+  --bar:#D9C7A7; --bar-ink:#4A3B2C;
+  --accent:#7A4A26; --accent-soft:#EBDCC6; --on-accent:#FFF8EE;
+  --warn:#9A6A12; --warn-soft:#F4E6C4; --alert:#A23B2A; --alert-soft:#F3DAD3;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0;background:var(--bg)}
+body{color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.45;-webkit-tap-highlight-color:transparent}
+body.in-app{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+[hidden]{display:none !important}
+
+header{padding:18px 20px 8px;max-width:680px;margin:0 auto;display:flex;align-items:center;gap:12px}
+header .htext{flex:1;min-width:0}
+header h1{font-family:var(--serif);font-weight:600;font-size:2rem;line-height:1.1;margin:0;letter-spacing:-.01em;overflow-wrap:anywhere}
+header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;width:42px;height:42px;font-size:1.15rem;cursor:pointer;flex:none;display:grid;place-items:center}
+.avatar{width:52px;height:52px;border-radius:50%;object-fit:cover;flex:none;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-family:var(--serif);font-size:1.5rem;font-weight:600;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}
+
+main{max-width:680px;margin:0 auto;padding:8px 16px 28px}
+h2{font-family:var(--serif);font-weight:600;font-size:1.35rem;margin:20px 4px 10px}
+h3{font-size:1rem;margin:22px 4px 8px;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+
+/* Accueil */
+.horses{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:12px}
+.horse-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:0;overflow:hidden;text-align:left;cursor:pointer;display:flex;flex-direction:column}
+.horse-card .pic{aspect-ratio:1;width:100%;object-fit:cover;display:block;background:var(--accent-soft)}
+.horse-card .pic.ph{display:grid;place-items:center;font-family:var(--serif);font-size:3.4rem;color:var(--accent)}
+.horse-card .info{padding:10px 12px 12px}
+.horse-card .name{font-family:var(--serif);font-size:1.25rem;font-weight:600;line-height:1.2;overflow-wrap:anywhere}
+.horse-card .sub{font-size:.82rem;color:var(--muted);margin-top:2px}
+.horse-card .sub.late{color:var(--alert);font-weight:600}
+.horse-card .sub.soon{color:var(--warn);font-weight:600}
+.add-card{border:2px dashed var(--bar);background:transparent;border-radius:18px;min-height:200px;display:grid;place-items:center;align-content:center;gap:6px;cursor:pointer;color:var(--accent);font-weight:600;padding:16px}
+.add-card span{font-size:2.4rem;line-height:1;font-weight:300}
+.welcome{text-align:center;padding:24px 12px 4px}
+.welcome p{color:var(--muted);margin:6px auto 0;max-width:34ch}
+
+/* Semaine */
+.weeknav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 12px}
+.weeknav strong{font-weight:600;text-align:center;font-size:.95rem}
+.weeknav button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;cursor:pointer;min-width:44px}
+.days{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.day{display:grid;grid-template-columns:8px 1fr;gap:12px;padding:12px 14px 12px 0;border-top:1px solid var(--line)}
+.day .dbody{display:grid;gap:8px;min-width:0}
+.day .dtop{display:grid;grid-template-columns:1fr minmax(140px,52%);gap:10px;align-items:center}
+.day textarea{resize:none;min-height:44px;line-height:1.35;overflow:hidden;font-size:.95rem}
+.day select.rider{font-size:.95rem}
+.day:first-child{border-top:none}
+.day .swatch{align-self:stretch;background:var(--c);border-radius:0 4px 4px 0}
+.day .dname strong{display:block;font-weight:600}
+.day .dname span{color:var(--muted);font-size:.85rem}
+.day.today{background:var(--accent-soft)}
+.day.today .dname strong::after{content:" · aujourd’hui";font-weight:400;color:var(--accent);font-size:.85rem}
+select,input[type=text],input[type=date],input[type=number],textarea{
+  width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px}
+.summary p{margin:0 0 8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:.88rem}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+button.chip{cursor:pointer}
+button.chip[aria-pressed=true]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+
+/* Formulaires */
+form{display:grid;gap:12px}
+label{display:grid;gap:4px;font-size:.9rem;color:var(--muted)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.primary{background:var(--accent);color:var(--on-accent);border:none;border-radius:10px;padding:12px 16px;font-weight:600;cursor:pointer;min-height:46px}
+.ghost{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;color:var(--ink);min-height:44px}
+.danger{background:transparent;border:none;color:var(--alert);cursor:pointer;padding:8px;font-size:.9rem}
+.danger-block{background:var(--alert-soft);color:var(--alert);border:none;border-radius:10px;padding:12px 16px;font-weight:600;cursor:pointer}
+.preview{background:var(--warn-soft);border-radius:10px;padding:10px 12px;font-size:.92rem}
+.photo-pick{display:flex;align-items:center;gap:14px}
+.photo-pick .avatar{width:84px;height:84px;font-size:2.2rem}
+.photo-pick .btns{display:grid;gap:6px;flex:1}
+.check{display:flex;align-items:center;gap:10px;color:var(--ink);font-size:.98rem;cursor:pointer;padding:6px 0}
+.check input{width:22px;height:22px;accent-color:var(--accent);margin:0;flex:none}
+.riders-block{display:grid;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px}
+.riders-block input,.riders-block select{background:var(--surface)}
+.rider-fields{display:grid;gap:8px}
+.filebtn{display:block;text-align:center;cursor:pointer}
+
+/* Listes */
+.list{display:grid;gap:8px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center}
+.item .grow{flex:1;min-width:0}
+.item .title{font-weight:600;overflow-wrap:anywhere}
+.item .meta{color:var(--muted);font-size:.86rem}
+.item.clickable{cursor:pointer}
+.ftype{flex:none;width:44px;height:44px;border-radius:10px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:.72rem;font-weight:700}
+.thumb{flex:none;width:44px;height:44px;border-radius:10px;object-fit:cover;background:var(--accent-soft)}
+.pill{display:inline-block;font-size:.76rem;border-radius:999px;padding:2px 9px;font-weight:600;margin-left:6px;vertical-align:1px}
+.pill.on{background:var(--accent-soft);color:var(--accent)}
+.pill.soon{background:var(--warn-soft);color:var(--warn)}
+.pill.off{background:var(--line);color:var(--muted)}
+.total{display:flex;justify-content:space-between;margin:10px 4px;font-size:.95rem}
+.empty{color:var(--muted);text-align:center;padding:22px 12px;border:1px dashed var(--bar);border-radius:12px}
+
+/* Doses */
+.doses{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.dose{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--ink);font-size:.9rem}
+.dose input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.dose:has(input:checked){background:var(--accent-soft);border-color:var(--accent)}
+
+/* Suivi détaillé d’un traitement */
+.track{display:grid;gap:6px;margin-top:10px}
+.track-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.track-row.today{background:var(--accent-soft);border-color:var(--accent)}
+.track-row.future{opacity:.55}
+.track-row .doses{margin-top:0}
+.track-row .dose:has(input:disabled){cursor:default}
+.tdate strong{display:block;font-weight:600}
+.tdate span{font-size:.82rem;color:var(--muted)}
+.progress{margin:0;font-size:.95rem}
+.progress .missed{color:var(--alert);font-weight:600}
+
+/* Maréchal */
+.horseshoe{border-radius:16px;padding:20px;background:var(--surface);border:1px solid var(--line);border-left:8px solid var(--c,var(--accent))}
+.horseshoe .big{font-family:var(--serif);font-size:1.9rem;line-height:1.15;margin:2px 0 6px}
+.horseshoe .status{font-weight:600;color:var(--c,var(--accent))}
+.horseshoe dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:14px 0 0;font-size:.92rem}
+.horseshoe dt{color:var(--muted)}
+.horseshoe dd{margin:0}
+
+/* Photos */
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;border-radius:12px;overflow:hidden}
+.gallery button{padding:0;border:none;background:var(--accent-soft);cursor:pointer;aspect-ratio:1;display:block}
+.gallery img{width:100%;height:100%;object-fit:cover;display:block}
+.caption{margin:12px 0 0;text-align:center}
+.caption .meta{color:var(--muted);font-size:.86rem}
+
+/* Feuilles (visionneuse, formulaires) */
+.overlay{position:fixed;inset:0;background:rgba(46,36,27,.55);display:flex;align-items:flex-end;justify-content:center;z-index:50;padding-top:env(safe-area-inset-top,0px)}
+.sheet{background:var(--surface);width:100%;max-width:760px;max-height:92vh;border-radius:18px 18px 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.sheet-head strong{flex:1;min-width:0;overflow-wrap:anywhere;font-family:var(--serif);font-size:1.15rem}
+.sheet-body{overflow:auto;padding:16px;flex:1}
+.sheet-body img.full{max-width:100%;max-height:62vh;display:block;margin:0 auto;border-radius:8px}
+.sheet-body iframe{width:100%;height:65vh;border:none;border-radius:8px;background:#fff}
+.sheet-body pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.88rem}
+.sheet-actions{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line)}
+.sheet-actions > *{flex:1;text-decoration:none;text-align:center}
+
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--bar);border-top:1px solid #C9B593;
+  display:grid;grid-template-columns:repeat(6,1fr);padding-bottom:env(safe-area-inset-bottom,0px);z-index:40}
+nav button{background:none;border:none;padding:8px 1px 10px;display:grid;justify-items:center;gap:2px;font-size:.7rem;color:var(--bar-ink);cursor:pointer;min-height:60px}
+nav button span{font-size:1.3rem;line-height:1.2;filter:grayscale(1);opacity:.6}
+nav button[aria-current=page]{color:var(--accent);font-weight:700}
+nav button[aria-current=page] span{filter:none;opacity:1}
+
+.install{background:var(--warn-soft);border-radius:14px;padding:14px 16px;margin:12px 0 4px;font-size:.92rem;display:flex;gap:10px;align-items:flex-start}
+.install p{margin:0;flex:1}
+.install button{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted);padding:0 4px}
+.banner{background:var(--alert-soft);border-radius:12px;padding:12px 14px;margin:8px 0;font-size:.9rem}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:.9rem;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion: reduce){.toast{transition:none}}
+@media (max-width:380px){.day .dtop{grid-template-columns:1fr 55%}.row{grid-template-columns:1fr}nav button{font-size:.62rem}}
+
+/* Copier une semaine */
+.week-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.cal-head strong{font-family:var(--serif);font-size:1.15rem}
+.cal-head button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;cursor:pointer;min-width:44px}
+.cal-dow,.cal-week{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
+.cal-dow{font-size:.78rem;color:var(--muted);font-weight:600;padding:0 4px 6px}
+.cal-weeks{display:grid;gap:4px}
+.cal-week{border:1px solid transparent;border-radius:12px;background:none;padding:8px 4px;cursor:pointer;font:inherit;color:var(--ink);position:relative}
+.cal-week:hover{background:var(--accent-soft)}
+.cal-week span{padding:4px 0;font-size:.95rem}
+.cal-week span.out{color:var(--muted);opacity:.5}
+.cal-week span.today{font-weight:700;color:var(--accent);text-decoration:underline}
+.cal-week span.has::after{content:"";display:block;width:5px;height:5px;border-radius:50%;background:var(--warn);margin:2px auto 0}
+.cal-week.source{background:var(--warn-soft);border-color:var(--warn);cursor:not-allowed}
+.cal-week.source::before{content:"Semaine copiée";position:absolute;top:-8px;right:10px;font-size:.68rem;font-weight:700;background:var(--warn);color:#fff;border-radius:999px;padding:1px 8px}
+.cal-week.target{background:var(--accent);border-color:var(--accent)}
+.cal-week.target span{color:var(--on-accent)}
+.cal-week.target span.out{color:var(--on-accent);opacity:.65}
+.cal-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin:12px 4px 0}
+.cal-legend i{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-1px;margin-right:5px}
+.copy-info{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.92rem;margin-bottom:12px}
+
+/* ----- Séance ----- */
+.seance-start{display:grid;gap:12px}
+.seance-start .primary{font-size:1.1rem;min-height:56px}
+.tip{font-size:.86rem;color:var(--muted);margin:0}
+.live{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;text-align:center}
+.live .gait{font-family:var(--serif);font-size:3rem;font-weight:600;line-height:1.1;margin:4px 0}
+.live .clock{font-size:1.6rem;font-variant-numeric:tabular-nums;font-weight:600}
+.live .kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+.live .kpis div{background:var(--bg);border-radius:12px;padding:10px}
+.live .kpis span{display:block;font-size:.8rem;color:var(--muted)}
+.live .kpis strong{font-size:1.15rem;font-variant-numeric:tabular-nums}
+.gps{font-size:.82rem;color:var(--muted)}.gps.ok{color:#2E7D32}.gps.bad{color:var(--alert)}
+.lrow{display:flex;justify-content:space-between;padding:6px 2px;border-top:1px solid var(--line);font-size:.95rem}
+.lrow i,.gtable i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px}
+.lrow strong{font-variant-numeric:tabular-nums}
+.live-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.tech{font-size:.78rem;color:var(--muted);font-family:ui-monospace,Menlo,monospace;margin:8px 0 0}
+.warn-line{color:var(--alert);font-size:.86rem;margin:6px 0 0}
+.gbar{display:flex;height:8px;border-radius:999px;overflow:hidden;background:var(--line);margin-top:8px}
+.gbar i{display:block;height:100%}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stats div{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stats span{display:block;font-size:.8rem;color:var(--muted)}
+.stats strong{font-size:1.2rem;font-variant-numeric:tabular-nums}
+.stats em{display:block;font-size:.72rem;color:var(--muted);font-style:normal}
+.gtable{width:100%;border-collapse:collapse;font-size:.92rem}
+.gtable th{font-size:.78rem;color:var(--muted);font-weight:600;text-align:right;padding:4px}
+.gtable td{padding:7px 4px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+.gtable td:first-child,.gtable th:first-child{text-align:left}
+.frise{position:relative;height:22px;border-radius:6px;background:var(--line);overflow:hidden}
+.frise i{position:absolute;top:0;bottom:0}
+.frise-axis{display:flex;justify-content:space-between;font-size:.74rem;color:var(--muted);margin-top:3px}
+.mapbox{height:320px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+nav button.rec span::after{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--alert);margin-left:2px;vertical-align:top}
+#lockScreen{position:fixed;inset:0;z-index:80;background:#000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:24px;user-select:none;-webkit-user-select:none;touch-action:none}
+#lockScreen .lg{font-family:var(--serif);font-size:3.4rem;font-weight:600}
+#lockScreen .lc{font-size:2.2rem;font-variant-numeric:tabular-nums;color:#ddd}
+#lockScreen .ls{font-size:1.1rem;color:#aaa}
+#unlockZone{margin-top:40px;border:2px solid #555;border-radius:999px;padding:16px 26px;color:#bbb;font-size:.95rem;position:relative;overflow:hidden;background:none}
+#unlockZone::before{content:"";position:absolute;inset:0;background:#7A4A26;transform:scaleX(0);transform-origin:left;z-index:-1}
+#unlockZone.holding::before{transform:scaleX(1);transition:transform 1.5s linear}
+</style>
+</head>
+<body>
+
+<div id="storageBanner" class="banner" style="max-width:680px;margin:8px auto" hidden>Ce navigateur bloque l’enregistrement des données quand le fichier est ouvert ainsi : vos saisies seront perdues à la fermeture. Essayez d’ouvrir le fichier avec Chrome, Firefox ou Safari.</div>
+
+<!-- ========== ACCUEIL ========== -->
+<div id="home">
+  <header>
+    <div class="htext">
+      <h1>Mes chevaux</h1>
+      <p id="homeDate"></p>
+    </div>
+    <button class="icon-btn" id="openBackup" aria-label="Sauvegarde">💾</button>
+  </header>
+  <main>
+    <div id="installTip" class="install" hidden></div>
+    <div id="welcome" class="welcome" hidden>
+      <p>Ajoutez votre premier cheval pour commencer son carnet.</p>
+    </div>
+    <div class="horses" id="horseGrid"></div>
+  </main>
+</div>
+
+<!-- ========== APPLICATION D’UN CHEVAL ========== -->
+<div id="app" hidden>
+  <header>
+    <button class="icon-btn" id="backHome" aria-label="Retour à mes chevaux">‹</button>
+    <div id="appAvatar"></div>
+    <div class="htext">
+      <h1 id="horseName" style="font-size:1.7rem"></h1>
+      <p id="todayLabel"></p>
+    </div>
+    <button class="icon-btn" id="editHorse" aria-label="Modifier le profil du cheval">✏️</button>
+  </header>
+
+  <main>
+    <!-- SEMAINE -->
+    <section id="tab-week" aria-label="Semaine">
+      <div class="weeknav">
+        <button id="prevWeek" aria-label="Semaine précédente">‹</button>
+        <strong id="weekLabel"></strong>
+        <button id="nextWeek" aria-label="Semaine suivante">›</button>
+      </div>
+      <div class="days" id="days"></div>
+      <div class="week-actions"><button class="ghost" id="thisWeek">Revenir à cette semaine</button><button class="ghost" id="copyWeek">📋 Copier la semaine</button></div>
+      <div class="summary panel" id="weekSummary" style="margin-top:14px"></div>
+    </section>
+
+    <!-- FACTURES -->
+    <section id="tab-docs" hidden aria-label="Factures">
+      <h2>Ajouter une facture</h2>
+      <form id="docForm" class="panel">
+        <label>Fichier(s) — PDF, photo, document…
+          <input type="file" id="docFile" multiple required>
+        </label>
+        <div class="row">
+          <label>Catégorie <select id="docCat"></select></label>
+          <label>Date <input type="date" id="docDate" required></label>
+        </div>
+        <label>Montant en € (facultatif)
+          <input type="text" id="docAmount" inputmode="decimal" placeholder="ex. 85,50">
+        </label>
+        <button class="primary" type="button" data-submit>Ajouter la facture</button>
+      </form>
+      <h2>Factures</h2>
+      <div class="chips" id="docFilters"></div>
+      <div class="total" id="docTotal"></div>
+      <div class="list" id="docList"></div>
+    </section>
+
+    <!-- SOINS -->
+    <section id="tab-care" hidden aria-label="Suivi vétérinaire">
+      <h2>À donner aujourd’hui</h2>
+      <div class="list" id="todayDoses"></div>
+      <h2>Ajouter un traitement</h2>
+      <form id="careForm" class="panel">
+        <label>Traitement
+          <input type="text" id="careName" required placeholder="ex. Equipalazone, 1 sachet">
+        </label>
+        <div class="row">
+          <label>Début <input type="date" id="careStart" required></label>
+          <label>Fin <input type="date" id="careEnd" required></label>
+        </div>
+        <label>Fréquence
+          <select id="careFreq">
+            <option value="1">1 fois par jour</option>
+            <option value="2">2 fois par jour</option>
+            <option value="3">3 fois par jour</option>
+          </select>
+        </label>
+        <button class="primary" type="button" data-submit>Ajouter le traitement</button>
+      </form>
+      <h3>Tous les traitements</h3>
+      <div class="list" id="careList"></div>
+    </section>
+
+    <!-- MARÉCHAL -->
+    <section id="tab-farrier" hidden aria-label="Maréchalerie">
+      <h2>Prochaine ferrure</h2>
+      <div id="farrierStatus"></div>
+      <h2>Enregistrer une ferrure</h2>
+      <form id="farrierForm" class="panel">
+        <div class="row">
+          <label>Date de la ferrure <input type="date" id="shoeDate" required></label>
+          <label>Intervalle (semaines)
+            <input type="number" id="shoeInterval" min="1" max="26" step="1" required inputmode="numeric">
+          </label>
+        </div>
+        <label>Remarque (facultatif)
+          <input type="text" id="shoeNote" placeholder="ex. Fers antérieurs seulement">
+        </label>
+        <div class="preview" id="shoePreview"></div>
+        <button class="primary" type="button" data-submit>Enregistrer la ferrure</button>
+      </form>
+      <h3>Historique</h3>
+      <div class="list" id="shoeList"></div>
+    </section>
+
+    <!-- PHOTOS -->
+    <!-- SÉANCE -->
+    <section id="tab-seance" hidden aria-label="Séance">
+      <div id="seanceIdle">
+        <h2>Nouvelle séance</h2>
+        <div class="panel seance-start">
+          <label class="check"><input type="checkbox" id="seanceMap"> Tracer le parcours sur une carte (pour les balades)</label>
+          <button class="primary" type="button" id="startSeance">▶ Lancer la séance</button>
+          <p class="tip">Gardez l’application ouverte, écran allumé, téléphone dans la poche. Si vous ouvrez une autre application ou que l’écran s’éteint, la mesure se met en pause. Au premier lancement, autorisez la localisation précise.</p>
+        </div>
+      </div>
+      <div id="seanceLive" hidden>
+        <h2>Séance en cours</h2>
+        <div class="live">
+          <div class="clock" id="liveClock">0:00</div>
+          <div class="gait" id="liveGait">Analyse…</div>
+          <div class="gps" id="liveGps">GPS : recherche…</div>
+          <p class="warn-line" id="liveWarn"></p>
+          <div class="kpis"><div><span>Vitesse</span><strong id="liveSpeed">–</strong></div><div><span>Distance</span><strong id="liveDist">0 m</strong></div></div>
+          <div id="liveBars"></div>
+          <label class="check" style="justify-content:center;font-size:.85rem;margin-top:8px"><input type="checkbox" id="techToggle"> Afficher les mesures techniques</label>
+          <p class="tech" id="liveTech" hidden></p>
+          <div class="live-actions">
+            <button class="ghost" type="button" id="lockBtn">🔒 Verrouiller l’écran</button>
+            <button class="danger-block" type="button" id="endSeance">■ Terminer la séance</button>
+          </div>
+        </div>
+      </div>
+      <h2>Historique</h2>
+      <div class="list" id="seanceList"></div>
+    </section>
+    <section id="tab-photos" hidden aria-label="Photos">
+      <h2>Ajouter des photos</h2>
+      <form id="photoForm" class="panel">
+        <label>Photo(s)
+          <input type="file" id="photoFile" accept="image/*" multiple required>
+        </label>
+        <div class="row">
+          <label>Date <input type="date" id="photoDate" required></label>
+          <label>Légende (facultatif) <input type="text" id="photoCaption" placeholder="ex. Concours de Uzès"></label>
+        </div>
+        <button class="primary" type="button" data-submit>Ajouter les photos</button>
+      </form>
+      <div id="galleryWrap"></div>
+    </section>
+  </main>
+
+  <nav aria-label="Onglets">
+    <button data-tab="week" aria-current="page"><span>📅</span>Semaine</button>
+    <button data-tab="docs"><span>🧾</span>Factures</button>
+    <button data-tab="care"><span>💊</span>Soins</button>
+    <button data-tab="farrier"><span>🔨</span>Maréchal</button>
+    <button data-tab="photos"><span>📷</span>Photos</button>
+    <button data-tab="seance"><span>🏇</span>Séance</button>
+  </nav>
+</div>
+
+<!-- Écran verrouillé pendant la séance -->
+<div id="lockScreen" hidden>
+  <div class="lc" id="lockClock">0:00</div>
+  <div class="lg" id="lockGait">–</div>
+  <div class="ls" id="lockSpeed"></div>
+  <button type="button" id="unlockZone">Maintenir appuyé pour déverrouiller</button>
+</div>
+
+<!-- Visionneuse -->
+<div class="overlay" id="viewer" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="viewerTitle">
+    <div class="sheet-head">
+      <strong id="viewerTitle"></strong>
+      <button class="icon-btn" data-close aria-label="Fermer">✕</button>
+    </div>
+    <div class="sheet-body" id="viewerBody"></div>
+    <div class="sheet-actions" id="viewerActions"></div>
+  </div>
+</div>
+
+<!-- Profil du cheval (création / modification) -->
+<div class="overlay" id="horseSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="horseSheetTitle">
+    <div class="sheet-head">
+      <strong id="horseSheetTitle">Ajouter un cheval</strong>
+      <button class="icon-btn" data-close aria-label="Fermer">✕</button>
+    </div>
+    <div class="sheet-body">
+      <form id="horseForm">
+        <div class="photo-pick">
+          <div id="horsePhotoPreview"></div>
+          <div class="btns">
+            <label class="ghost filebtn">Choisir une photo
+              <input type="file" id="horsePhotoInput" accept="image/*" hidden>
+            </label>
+            <button type="button" class="ghost" id="removeHorsePhoto" hidden>Retirer la photo</button>
+          </div>
+        </div>
+        <label>Nom du cheval
+          <input type="text" id="horseNameInput" maxlength="40" required placeholder="ex. Quiproquo">
+        </label>
+        <label class="check"><input type="checkbox" id="multiRiders"> Plusieurs cavalier(e)s sur ce cheval</label>
+        <div class="riders-block" id="ridersBlock" hidden>
+          <label>Nombre de cavalier(e)s
+            <select id="riderCount"></select>
+          </label>
+          <div class="rider-fields" id="riderFields"></div>
+        </div>
+        <button class="primary" type="button" data-submit id="horseSubmit">Ajouter le cheval</button>
+        <button class="danger-block" type="button" id="deleteHorse" hidden>Supprimer ce cheval</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Sauvegarde -->
+<div class="overlay" id="backupSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="backupTitle">
+    <div class="sheet-head">
+      <strong id="backupTitle">Sauvegarde</strong>
+      <button class="icon-btn" data-close aria-label="Fermer">✕</button>
+    </div>
+    <div class="sheet-body">
+      <p class="muted" style="margin:0 0 14px;font-size:.92rem">Toutes les données restent uniquement dans ce navigateur, sur ce téléphone. Exportez régulièrement une sauvegarde : elle contient tous les chevaux, factures et photos comprises, et permet de tout récupérer sur un autre appareil.</p>
+      <div style="display:grid;gap:8px">
+        <button class="primary" id="exportBtn" type="button">Exporter une sauvegarde</button>
+        <label class="ghost filebtn">Importer une sauvegarde
+          <input type="file" id="importFile" accept=".json,application/json" hidden>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Copier une semaine -->
+<div class="overlay" id="copySheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="copyTitle">
+    <div class="sheet-head"><strong id="copyTitle">Coller la semaine sur…</strong><button class="icon-btn" data-close aria-label="Fermer">✕</button></div>
+    <div class="sheet-body">
+      <div class="copy-info" id="copyInfo"></div>
+      <div class="cal-head">
+        <button type="button" id="calPrev" aria-label="Mois précédent">‹</button>
+        <strong id="calMonth"></strong>
+        <button type="button" id="calNext" aria-label="Mois suivant">›</button>
+      </div>
+      <div class="cal-dow"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+      <div class="cal-weeks" id="calWeeks"></div>
+      <div class="cal-legend">
+        <span><i style="background:var(--warn-soft);border:1px solid var(--warn)"></i>Semaine copiée</span>
+        <span><i style="background:var(--accent)"></i>Semaine choisie</span>
+        <span><i style="background:var(--warn);border-radius:50%;width:7px;height:7px"></i>Jour déjà rempli</span>
+      </div>
+      <label class="check" style="margin-top:12px"><input type="checkbox" id="copyNotes"> Copier aussi les notes du jour</label>
+      <p class="muted" id="copyTargetText" style="margin:6px 0 0;font-size:.9rem">Touchez la semaine sur laquelle coller les activités.</p>
+    </div>
+    <div class="sheet-actions">
+      <button class="ghost" type="button" data-close>Annuler</button>
+      <button class="primary" type="button" id="copyPaste" disabled>Coller</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation -->
+<div class="overlay" id="confirmSheet" style="z-index:70;align-items:center;padding:16px" hidden>
+  <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="confirmText" style="border-radius:18px;max-width:420px">
+    <div class="sheet-body"><p id="confirmText" style="margin:0;font-size:1.02rem"></p></div>
+    <div class="sheet-actions">
+      <button class="ghost" type="button" id="confirmCancel">Annuler</button>
+      <button class="danger-block" type="button" id="confirmOk">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+const ACTIVITIES = [
+  ["Balade","#3C8FA0"],["Barre au sol","#8C6A40"],["Club","#C2703D"],["Concours","#3B428C"],["Cross","#7D8A2E"],
+  ["CSO","#C0563A"],["Dressage","#4C6FA8"],["Longe","#6B7C8F"],["Mise en selle","#8A5FA8"],["Piste de galop","#2F7A55"],
+  ["Repos","#B5AA9C"],["Stretching","#5E9FB8"],["TAP","#B04F7A"],["TREC","#A0522D"],["Trotting","#D19A22"]
+];
+// Anciens intitulés conservés dans les données déjà saisies
+const ACTIVITY_ALIASES = { "Balade au pas":"Balade" };
+const normAct = a => ACTIVITY_ALIASES[a] || a;
+const DOC_CATS = ["Vétérinaire","Maréchal","Dentiste","Ostéopathe","Alimentation","Pension","Autre"];
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const actColor = a => (ACTIVITIES.find(x => x[0] === a) || [,"#999"])[1];
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const emptyHorseData = () => ({ days:{}, treatments:[], shoeing:[], sessions:[] });
+// days : { "2026-11-12": { activity, riderId, note } } — même structure que la future table Supabase
+function normalizeHorseData(d){
+  const out = Object.assign(emptyHorseData(), d || {});
+  if (out.activities){
+    for (const [k, a] of Object.entries(out.activities)) out.days[k] = Object.assign({}, out.days[k], { activity:a });
+    delete out.activities;
+  }
+  for (const d of Object.values(out.days)) if (d.activity) d.activity = normAct(d.activity);
+  return out;
+}
+
+/* ---------- Dates ---------- */
+const pad = n => String(n).padStart(2, "0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+const addDays = (d, n) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate()+n); return x; };
+const todayISO = () => iso(new Date());
+const fmt = (s, o = {day:"numeric", month:"long", year:"numeric"}) => parse(s).toLocaleDateString("fr-FR", o);
+const daysBetween = (a, b) => Math.round((parse(b) - parse(a)) / 86400000);
+const monday = d => addDays(d, -((d.getDay() + 6) % 7));
+const longToday = () => cap(new Date().toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long", year:"numeric"}));
+
+/* ---------- Stockage (IndexedDB, repli en mémoire) ---------- */
+let db = null, mem = null;
+function openDB(){
+  return new Promise((res, rej) => {
+    try {
+      const r = indexedDB.open("carnet-cheval", 1);
+      r.onupgradeneeded = () => { const d = r.result; d.createObjectStore("kv"); d.createObjectStore("files", {keyPath:"id"}); };
+      r.onsuccess = () => { db = r.result; res(); };
+      r.onerror = () => rej(r.error);
+    } catch(e){ rej(e); }
+  });
+}
+function tx(store, mode, fn){
+  return new Promise((res, rej) => {
+    const t = db.transaction(store, mode); const req = fn(t.objectStore(store)); let out;
+    if (req) req.onsuccess = () => { out = req.result; };
+    t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+  });
+}
+const kvGet = k => mem ? Promise.resolve(mem.kv[k]) : tx("kv","readonly", s => s.get(k));
+const kvSet = (k, v) => mem ? (mem.kv[k] = v, Promise.resolve()) : tx("kv","readwrite", s => s.put(v, k));
+const kvDel = k => mem ? (delete mem.kv[k], Promise.resolve()) : tx("kv","readwrite", s => s.delete(k));
+const kvClear = () => mem ? (mem.kv = {}, Promise.resolve()) : tx("kv","readwrite", s => s.clear());
+const fileAll = () => mem ? Promise.resolve(Object.values(mem.files)) : tx("files","readonly", s => s.getAll());
+const filePut = f => mem ? (mem.files[f.id] = f, Promise.resolve()) : tx("files","readwrite", s => s.put(f));
+const fileDel = id => mem ? (delete mem.files[id], Promise.resolve()) : tx("files","readwrite", s => s.delete(id));
+const fileClear = () => mem ? (mem.files = {}, Promise.resolve()) : tx("files","readwrite", s => s.clear());
+const filesOf = async (kind) => (await fileAll()).filter(f => f.horseId === cur.id && (f.kind || "invoice") === kind);
+
+let horses = [];          // [{id, name, photo:{type,data,v}|null, created}]
+let cur = null;           // cheval ouvert
+let hd = emptyHorseData(); // données du cheval ouvert
+const saveHorses = () => kvSet("horses", horses).catch(() => toast("Échec de l’enregistrement"));
+const save = () => kvSet("horse:" + cur.id, hd).catch(() => toast("Échec de l’enregistrement"));
+
+/* URLs d’images mises en cache */
+const urlCache = new Map();
+function blobUrl(key, data, type){
+  if (!urlCache.has(key)) urlCache.set(key, URL.createObjectURL(new Blob([data], {type})));
+  return urlCache.get(key);
+}
+function dropUrl(key){ if (urlCache.has(key)){ URL.revokeObjectURL(urlCache.get(key)); urlCache.delete(key); } }
+function avatarHTML(h, cls = "avatar"){
+  if (h && h.photo) return `<img class="${cls}" alt="" src="${blobUrl("h:"+h.id+":"+h.photo.v, h.photo.data, h.photo.type)}">`;
+  const initial = h && h.name ? esc(h.name.trim().charAt(0).toUpperCase()) : "🐴";
+  return `<div class="${cls}" aria-hidden="true">${initial}</div>`;
+}
+
+/* Redimensionnement des photos pour économiser l’espace */
+async function resizeImage(file, max, quality = 0.85){
+  try {
+    const u = URL.createObjectURL(file);
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; });
+    URL.revokeObjectURL(u);
+    const w = img.naturalWidth, h = img.naturalHeight, r = Math.min(1, max / Math.max(w, h));
+    if (r === 1 && file.size < 1.5e6) return { type:file.type, data: await file.arrayBuffer() };
+    const c = document.createElement("canvas"); c.width = Math.round(w*r); c.height = Math.round(h*r);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise(res => c.toBlob(res, "image/jpeg", quality));
+    if (!blob) throw new Error("toBlob");
+    return { type:"image/jpeg", data: await blob.arrayBuffer() };
+  } catch(e){
+    return { type:file.type || "image/jpeg", data: await file.arrayBuffer() };
+  }
+}
+
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+/* Formulaires : gérés au clic plutôt que par l’envoi du formulaire,
+   qui est bloqué dans certaines visionneuses (aperçus, applis de messagerie…) */
+function onSubmit(sel, fn){
+  const form = $(sel);
+  form.addEventListener("submit", e => e.preventDefault());
+  const run = () => { if (!form.checkValidity()){ form.reportValidity(); return; } fn(); };
+  form.querySelector("[data-submit]").addEventListener("click", run);
+  form.addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.target.tagName === "INPUT" && e.target.type !== "file"){ e.preventDefault(); run(); }
+  });
+}
+/* Confirmation intégrée (les fenêtres confirm() du navigateur sont bloquées dans certaines visionneuses) */
+function askConfirm(msg, okLabel = "Supprimer"){
+  return new Promise(res => {
+    const sheet = $("#confirmSheet"), ok = $("#confirmOk"), cancel = $("#confirmCancel");
+    $("#confirmText").textContent = msg; ok.textContent = okLabel;
+    const done = v => { sheet.hidden = true; ok.onclick = cancel.onclick = sheet.onclick = null; res(v); };
+    ok.onclick = () => done(true);
+    cancel.onclick = () => done(false);
+    sheet.onclick = e => { if (e.target === sheet) done(false); };
+    sheet.hidden = false; cancel.focus();
+  });
+}
+
+/* ---------- Feuilles ---------- */
+function openSheet(id){ $(id).hidden = false; }
+function closeSheet(el){
+  el.hidden = true;
+  if (el.id === "viewer"){ $("#viewerBody").innerHTML = ""; if (viewerUrl){ const u = viewerUrl; viewerUrl = null; setTimeout(() => URL.revokeObjectURL(u), 1000); } }
+}
+document.querySelectorAll(".overlay:not(#confirmSheet)").forEach(o => {
+  o.addEventListener("click", e => { if (e.target === o || e.target.closest("[data-close]")) closeSheet(o); });
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll(".overlay:not([hidden]):not(#confirmSheet)").forEach(closeSheet); });
+
+/* ---------- Accueil ---------- */
+function horseStatus(data){
+  const last = [...(data.shoeing || [])].sort((a, b) => b.date.localeCompare(a.date))[0];
+  const t = todayISO();
+  const active = (data.treatments || []).filter(x => x.start <= t && x.end >= t).length;
+  const parts = []; let cls = "";
+  if (last){
+    const left = daysBetween(t, nextShoe(last));
+    if (left < 0){ parts.push(`Ferrure en retard de ${plural(-left,"jour","jours")}`); cls = "late"; }
+    else if (left <= 7){ parts.push(left === 0 ? "Ferrure aujourd’hui" : `Ferrure dans ${plural(left,"jour","jours")}`); cls = "soon"; }
+    else parts.push(`Ferrure dans ${plural(left,"jour","jours")}`);
+  }
+  if (active) parts.push(`${plural(active,"traitement","traitements")} en cours`);
+  return { text: parts.join(" · ") || "Rien à signaler", cls };
+}
+async function renderHome(){
+  $("#homeDate").textContent = longToday();
+  const grid = $("#horseGrid"); grid.innerHTML = "";
+  $("#welcome").hidden = horses.length > 0;
+  for (const h of horses){
+    const data = (await kvGet("horse:" + h.id)) || emptyHorseData();
+    const st = horseStatus(data);
+    if (h.multi && h.riders && h.riders.length) st.text = `${h.riders.length} cavalier(e)s · ` + st.text;
+    const b = document.createElement("button"); b.className = "horse-card"; b.type = "button";
+    const pic = h.photo
+      ? `<img class="pic" alt="" src="${blobUrl("h:"+h.id+":"+h.photo.v, h.photo.data, h.photo.type)}">`
+      : `<div class="pic ph" aria-hidden="true">${esc(h.name.trim().charAt(0).toUpperCase())}</div>`;
+    b.innerHTML = `${pic}<div class="info"><div class="name">${esc(h.name)}</div><div class="sub ${st.cls}">${esc(st.text)}</div></div>`;
+    b.onclick = () => enterHorse(h.id);
+    grid.append(b);
+  }
+  const add = document.createElement("button"); add.type = "button"; add.className = "add-card";
+  add.innerHTML = `<span>+</span>Ajouter un cheval`;
+  add.onclick = () => openHorseForm(null);
+  grid.append(add);
+}
+function showHome(){
+  cur = null; document.title = "Suivi cheval";
+  $("#app").hidden = true; $("#home").hidden = false; document.body.classList.remove("in-app");
+  window.scrollTo(0, 0); renderHome();
+}
+async function enterHorse(id, push = true){
+  cur = horses.find(h => h.id === id); if (!cur) return showHome();
+  hd = normalizeHorseData(await kvGet("horse:" + id));
+  weekStart = monday(new Date()); docFilter = "Toutes";
+  $("#shoeInterval").value = "";
+  renderAppHeader();
+  $("#home").hidden = true; $("#app").hidden = false; document.body.classList.add("in-app");
+  if (push){ try { history.pushState({horse:id}, "", "#cheval"); } catch(e){} }
+  showTab("week");
+}
+function renderAppHeader(){
+  $("#horseName").textContent = cur.name;
+  $("#appAvatar").innerHTML = avatarHTML(cur);
+  $("#todayLabel").textContent = longToday();
+  document.title = cur.name + " — Suivi cheval";
+}
+$("#backHome").onclick = () => {
+  if (rec){ toast("Terminez d’abord la séance en cours"); showTab("seance"); return; }
+  if (history.state && history.state.horse) history.back(); else showHome();
+};
+window.addEventListener("popstate", e => {
+  if (rec && cur && !(e.state && e.state.horse === cur.id)){
+    try { history.pushState({horse:cur.id}, "", "#cheval"); } catch(err){}
+    toast("Terminez d’abord la séance en cours"); return;
+  }
+  if (e.state && e.state.horse) enterHorse(e.state.horse, false); else showHome();
+});
+
+/* ---------- Profil du cheval ---------- */
+let editingId = null, pendingPhoto;   // undefined = inchangée, null = retirée, objet = nouvelle
+function refreshPhotoPreview(){
+  const name = $("#horseNameInput").value || "";
+  let photo = pendingPhoto;
+  if (photo === undefined && editingId) photo = horses.find(h => h.id === editingId).photo;
+  const fake = { id:"preview", name, photo: photo ? { ...photo, v:"p"+(photo.v||"") } : null };
+  dropUrl("h:preview:" + (fake.photo ? fake.photo.v : ""));
+  $("#horsePhotoPreview").innerHTML = avatarHTML(fake);
+  $("#removeHorsePhoto").hidden = !photo;
+}
+/* Cavalier(e)s */
+$("#riderCount").innerHTML = Array.from({length:98}, (_, i) => `<option value="${i+2}">${i+2}</option>`).join("");
+let riderDraft = [];   // [{id, name}] conservé quand on change le nombre
+function readRiderFields(){
+  document.querySelectorAll("#riderFields input").forEach((inp, i) => { if (riderDraft[i]) riderDraft[i].name = inp.value; });
+}
+function renderRiderFields(){
+  readRiderFields();
+  const n = parseInt($("#riderCount").value, 10) || 2;
+  while (riderDraft.length < n) riderDraft.push({ id: uid(), name:"" });
+  const box = $("#riderFields"); box.innerHTML = "";
+  for (let i = 0; i < n; i++){
+    const l = document.createElement("label");
+    l.textContent = `Cavalier(e) ${i + 1}`;
+    const inp = document.createElement("input");
+    inp.type = "text"; inp.maxLength = 40; inp.required = true; inp.value = riderDraft[i].name;
+    inp.placeholder = "Prénom ou nom";
+    l.append(inp); box.append(l);
+  }
+}
+function toggleRiders(){
+  const on = $("#multiRiders").checked;
+  $("#ridersBlock").hidden = !on;
+  if (on) renderRiderFields(); else { readRiderFields(); $("#riderFields").innerHTML = ""; }
+}
+$("#multiRiders").addEventListener("change", toggleRiders);
+$("#riderCount").addEventListener("change", renderRiderFields);
+
+function openHorseForm(id){
+  editingId = id; pendingPhoto = undefined;
+  const h = id ? horses.find(x => x.id === id) : null;
+  riderDraft = h && h.riders ? h.riders.map(r => ({ ...r })) : [];
+  $("#multiRiders").checked = !!(h && h.multi);
+  $("#riderCount").value = String(Math.min(99, Math.max(2, riderDraft.length || 2)));
+  $("#riderFields").innerHTML = "";
+  toggleRiders();
+  $("#horseSheetTitle").textContent = h ? "Modifier le profil" : "Ajouter un cheval";
+  $("#horseSubmit").textContent = h ? "Enregistrer" : "Ajouter le cheval";
+  $("#deleteHorse").hidden = !h;
+  $("#horseNameInput").value = h ? h.name : "";
+  $("#horsePhotoInput").value = "";
+  refreshPhotoPreview();
+  openSheet("#horseSheet");
+}
+$("#horseNameInput").addEventListener("input", refreshPhotoPreview);
+$("#horsePhotoInput").addEventListener("change", async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const p = await resizeImage(f, 700, 0.85);
+  pendingPhoto = { ...p, v: Date.now() };
+  refreshPhotoPreview();
+});
+$("#removeHorsePhoto").onclick = () => { pendingPhoto = null; refreshPhotoPreview(); };
+onSubmit("#horseForm", async () => {
+  const name = $("#horseNameInput").value.trim(); if (!name) return;
+  const multi = $("#multiRiders").checked;
+  let riders = [];
+  if (multi){
+    readRiderFields();
+    const n = parseInt($("#riderCount").value, 10);
+    riders = riderDraft.slice(0, n).map(r => ({ id: r.id, name: r.name.trim() }));
+    if (riders.some(r => !r.name)){ toast("Indiquez le nom de chaque cavalier(e)"); return; }
+  }
+  if (editingId){
+    const h = horses.find(x => x.id === editingId);
+    h.name = name; h.multi = multi; h.riders = riders;
+    if (pendingPhoto !== undefined) h.photo = pendingPhoto;
+    await saveHorses(); closeSheet($("#horseSheet"));
+    if (cur && cur.id === h.id){ renderAppHeader(); if (!$("#tab-week").hidden) renderWeek(); } else renderHome();
+    toast("Profil enregistré");
+  } else {
+    const h = { id: uid(), name, photo: pendingPhoto || null, multi, riders, created: Date.now() };
+    horses.push(h); await saveHorses(); await kvSet("horse:" + h.id, emptyHorseData());
+    closeSheet($("#horseSheet")); renderHome(); toast(`${name} a été ajouté`);
+  }
+});
+$("#editHorse").onclick = () => openHorseForm(cur.id);
+$("#deleteHorse").onclick = async () => {
+  const h = horses.find(x => x.id === editingId);
+  if (!(await askConfirm(`Supprimer ${h.name} et toutes ses données (activités, factures, soins, ferrures, photos) ? Cette action est définitive.`, `Supprimer ${h.name}`))) return;
+  for (const f of await fileAll()) if (f.horseId === h.id) await fileDel(f.id);
+  await kvDel("horse:" + h.id);
+  horses = horses.filter(x => x.id !== h.id); await saveHorses();
+  closeSheet($("#horseSheet")); toast(`${h.name} a été supprimé`);
+  if (history.state && history.state.horse){ try { history.back(); } catch(e){ showHome(); } } else showHome();
+};
+
+/* ---------- Onglets ---------- */
+const TABS = ["week","docs","care","farrier","photos","seance"];
+function showTab(name){
+  if (!TABS.includes(name)) name = "week";
+  TABS.forEach(t => { $("#tab-"+t).hidden = t !== name; });
+  document.querySelectorAll("nav button").forEach(b => {
+    if (b.dataset.tab === name) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
+  });
+  window.scrollTo(0, 0);
+  ({ week:renderWeek, docs:renderDocs, care:renderCare, farrier:renderFarrier, photos:renderPhotos, seance:renderSeance })[name]();
+}
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+
+/* ---------- Semaine ---------- */
+let weekStart = monday(new Date());
+const riderName = id => ((cur.riders || []).find(r => r.id === id) || {}).name || "";
+function setDay(k, field, value){
+  const d = Object.assign({}, hd.days[k]);
+  if (value) d[field] = value; else delete d[field];
+  if (Object.keys(d).length) hd.days[k] = d; else delete hd.days[k];
+}
+let noteTimer;
+function autoGrow(t){ t.style.height = "auto"; t.style.height = t.scrollHeight + 2 + "px"; }
+function renderWeek(){
+  const end = addDays(weekStart, 6);
+  const multi = !!(cur.multi && cur.riders && cur.riders.length);
+  $("#weekLabel").textContent =
+    `${weekStart.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})} – ${end.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})}`;
+  const list = $("#days"); list.innerHTML = "";
+  const counts = {}, byRider = {}; const today = todayISO();
+  for (let i = 0; i < 7; i++){
+    const d = addDays(weekStart, i), k = iso(d), day = hd.days[k] || {}, val = day.activity || "";
+    if (val) counts[val] = (counts[val] || 0) + 1;
+    if (multi && day.riderId && riderName(day.riderId) && val !== "Repos") byRider[day.riderId] = (byRider[day.riderId] || 0) + 1;
+    const longDate = d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+    const row = document.createElement("div");
+    row.className = "day" + (k === today ? " today" : "");
+    row.innerHTML = `<span class="swatch" style="--c:${val ? actColor(val) : "transparent"}"></span>
+      <div class="dbody"><div class="dtop"><div class="dname"><strong>${cap(d.toLocaleDateString("fr-FR",{weekday:"long"}))}</strong>
+      <span>${d.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</span></div></div></div>`;
+    const body = row.querySelector(".dbody");
+    const sel = document.createElement("select");
+    sel.setAttribute("aria-label", "Activité du " + longDate);
+    sel.innerHTML = `<option value="">Activité…</option>` + ACTIVITIES.map(([a]) => `<option${a === val ? " selected" : ""}>${a}</option>`).join("");
+    sel.addEventListener("change", () => { setDay(k, "activity", sel.value); save(); renderWeek(); });
+    row.querySelector(".dtop").append(sel);
+    if (multi){
+      const rs = document.createElement("select"); rs.className = "rider";
+      rs.setAttribute("aria-label", "Cavalier(e) du " + longDate);
+      rs.innerHTML = `<option value="">Cavalier(e)…</option>` +
+        cur.riders.map(r => `<option value="${r.id}"${r.id === day.riderId ? " selected" : ""}>${esc(r.name)}</option>`).join("");
+      rs.addEventListener("change", () => { setDay(k, "riderId", rs.value); save(); renderWeek(); });
+      body.append(rs);
+    }
+    const note = document.createElement("textarea");
+    note.rows = 1; note.maxLength = 1000; note.value = day.note || "";
+    note.placeholder = "Note du jour (facultatif)";
+    note.setAttribute("aria-label", "Note du " + longDate);
+    note.addEventListener("input", () => {
+      autoGrow(note); setDay(k, "note", note.value.trim() ? note.value : "");
+      clearTimeout(noteTimer); noteTimer = setTimeout(save, 400);
+    });
+    note.addEventListener("blur", () => { clearTimeout(noteTimer); save(); });
+    body.append(note);
+    list.append(row);
+    requestAnimationFrame(() => autoGrow(note));
+  }
+  const entries = Object.entries(counts);
+  const worked = entries.filter(([a]) => a !== "Repos").reduce((s, [,n]) => s + n, 0);
+  const riderChips = multi && Object.keys(byRider).length
+    ? `<p class="muted" style="margin:12px 0 6px;font-size:.9rem">Par cavalier(e)</p><div class="chips">${cur.riders.filter(r => byRider[r.id]).map(r => `<span class="chip">${esc(r.name)} · ${plural(byRider[r.id], "jour", "jours")}</span>`).join("")}</div>`
+    : "";
+  $("#weekSummary").innerHTML = entries.length
+    ? `<p><strong>${plural(worked, "jour de travail", "jours de travail")}</strong> cette semaine${counts.Repos ? `, ${plural(counts.Repos, "jour", "jours")} de repos` : ""}.</p>
+       <div class="chips">${entries.filter(([a]) => a !== "Repos").map(([a,n]) => `<span class="chip"><i style="background:${actColor(a)}"></i>${a} × ${n}</span>`).join("")}</div>${riderChips}`
+    : `<p class="muted" style="margin:0">Aucune activité saisie pour cette semaine. Choisissez une activité pour chaque jour.</p>`;
+}
+$("#prevWeek").onclick = () => { weekStart = addDays(weekStart, -7); renderWeek(); };
+$("#nextWeek").onclick = () => { weekStart = addDays(weekStart, 7); renderWeek(); };
+$("#thisWeek").onclick = () => { weekStart = monday(new Date()); renderWeek(); };
+async function copyMarks(from, to){
+  return new Set(Object.keys(hd.days).filter(k => k >= from && k <= to && (hd.days[k].activity || hd.days[k].riderId || hd.days[k].note)));
+}
+function copySourceDays(){
+  const out = {};
+  Object.entries(hd.days).forEach(([k, d]) => { out[k] = { activity: d.activity, rider_id: d.riderId, note: d.note }; });
+  return out;
+}
+async function pasteWeek(src, dst, withNotes){
+  let n = 0;
+  for (let i = 0; i < 7; i++){
+    const d = copyBuffer.days[i]; if (!d) continue;
+    const k = iso(addDays(dst, i)), ex = hd.days[k] || {};
+    const nd = {};
+    if (d.activity) nd.activity = d.activity;
+    if (d.rider_id) nd.riderId = d.rider_id;
+    const note = withNotes && d.note ? d.note : ex.note;
+    if (note) nd.note = note;
+    hd.days[k] = nd; n++;
+  }
+  await save();
+  return n;
+}
+/* ---------- Copier une semaine ---------- */
+let copyBuffer = null, calMonth = null, copyTarget = null;
+const shortRange = d => `${d.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})} – ${addDays(d, 6).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})}`;
+$("#copyWeek").onclick = () => {
+  const src = copySourceDays(), days = [];
+  let count = 0;
+  for (let i = 0; i < 7; i++){
+    const d = src[iso(addDays(weekStart, i))];
+    if (d && (d.activity || d.rider_id || (d.note || "").trim())){ days[i] = { activity: d.activity || null, rider_id: d.rider_id || null, note: d.note || null }; if (d.activity) count++; }
+  }
+  if (!days.some(Boolean)){ toast("Cette semaine est vide : rien à copier"); return; }
+  copyBuffer = { start: weekStart, days };
+  copyTarget = null;
+  const acts = days.filter(d => d && d.activity).map(d => d.activity);
+  $("#copyInfo").innerHTML = `<strong>Semaine copiée : ${esc(shortRange(weekStart))}</strong><br>` +
+    (acts.length ? esc(acts.join(" · ")) : "Notes et cavalier(e)s uniquement");
+  $("#copyNotes").checked = false;
+  const next = addDays(weekStart, 7);
+  calMonth = new Date(next.getFullYear(), next.getMonth(), 1);
+  drawCalendar();
+  updateCopyTarget();
+  openSheet("#copySheet");
+};
+async function drawCalendar(){
+  const month = calMonth;
+  $("#calMonth").textContent = cap(month.toLocaleDateString("fr-FR", {month:"long", year:"numeric"}));
+  const first = monday(month), lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+  const weeks = []; for (let w = first; w <= lastDay; w = addDays(w, 7)) weeks.push(w);
+  let marks = new Set();
+  try { marks = await copyMarks(iso(weeks[0]), iso(addDays(weeks[weeks.length - 1], 6))); } catch(e){}
+  if (calMonth !== month) return;
+  const box = $("#calWeeks"); box.innerHTML = "";
+  const today = todayISO(), srcK = iso(copyBuffer.start);
+  weeks.forEach(w => {
+    const k = iso(w), isSrc = k === srcK;
+    const b = document.createElement("button"); b.type = "button";
+    b.className = "cal-week" + (isSrc ? " source" : "") + (copyTarget && iso(copyTarget) === k ? " target" : "");
+    b.setAttribute("aria-label", (isSrc ? "Semaine copiée, " : "Semaine du ") + shortRange(w));
+    if (isSrc) b.setAttribute("aria-disabled", "true");
+    for (let i = 0; i < 7; i++){
+      const d = addDays(w, i), dk = iso(d), sp = document.createElement("span");
+      sp.textContent = d.getDate();
+      if (d.getMonth() !== month.getMonth()) sp.classList.add("out");
+      if (dk === today) sp.classList.add("today");
+      if (marks.has(dk) && !isSrc) sp.classList.add("has");
+      b.append(sp);
+    }
+    b.onclick = () => {
+      if (isSrc){ toast("C’est la semaine copiée : choisissez-en une autre"); return; }
+      copyTarget = w; updateCopyTarget();
+      box.querySelectorAll(".cal-week").forEach(x => x.classList.remove("target")); b.classList.add("target");
+    };
+    box.append(b);
+  });
+}
+function updateCopyTarget(){
+  $("#copyPaste").disabled = !copyTarget;
+  $("#copyTargetText").textContent = copyTarget
+    ? `Les activités seront collées sur la semaine du ${shortRange(copyTarget)}. Les jours vides de la semaine copiée ne modifient rien.`
+    : "Touchez la semaine sur laquelle coller les activités.";
+}
+$("#calPrev").onclick = () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); drawCalendar(); };
+$("#calNext").onclick = () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); drawCalendar(); };
+$("#copyPaste").onclick = async () => {
+  if (!copyTarget || iso(copyTarget) === iso(copyBuffer.start)) return;
+  const btn = $("#copyPaste"); btn.disabled = true; btn.textContent = "Collage…";
+  try {
+    const marks = await copyMarks(iso(copyTarget), iso(addDays(copyTarget, 6)));
+    const overwrite = copyBuffer.days.some((d, i) => d && marks.has(iso(addDays(copyTarget, i))));
+    if (overwrite && !(await askConfirm(`Certains jours de la semaine du ${shortRange(copyTarget)} sont déjà remplis : leurs activités seront remplacées. Continuer ?`, "Remplacer"))) return;
+    const n = await pasteWeek(copyBuffer.start, copyTarget, $("#copyNotes").checked);
+    closeSheet($("#copySheet"));
+    weekStart = copyTarget; renderWeek();
+    toast(`${plural(n, "jour collé", "jours collés")} sur la semaine du ${shortRange(copyTarget)}`, 3500);
+  } catch(e){}
+  finally { btn.disabled = !copyTarget; btn.textContent = "Coller"; }
+};
+
+
+/* ---------- Factures ---------- */
+let docFilter = "Toutes";
+$("#docCat").innerHTML = DOC_CATS.map(c => `<option>${c}</option>`).join("");
+const parseAmount = s => { const n = parseFloat(String(s).replace(/\s/g,"").replace(",", ".")); return isNaN(n) ? null : n; };
+const euro = n => n.toLocaleString("fr-FR", {style:"currency", currency:"EUR"});
+function typeLabel(f){
+  const t = f.type || "", ext = (f.name.split(".").pop() || "").toUpperCase();
+  if (t === "application/pdf") return "PDF";
+  if (t.startsWith("image/")) return "IMG";
+  return ext.length && ext.length <= 4 ? ext : "DOC";
+}
+onSubmit("#docForm", async () => {
+  const files = [...$("#docFile").files]; if (!files.length) return;
+  const amount = parseAmount($("#docAmount").value);
+  try {
+    for (const file of files){
+      await filePut({
+        id: uid(), horseId: cur.id, kind:"invoice", name: file.name, type: file.type, size: file.size,
+        cat: $("#docCat").value, date: $("#docDate").value,
+        amount: files.length === 1 ? amount : null,
+        data: await file.arrayBuffer(), added: Date.now()
+      });
+    }
+    $("#docFile").value = ""; $("#docAmount").value = "";
+    toast(files.length > 1 ? `${files.length} factures ajoutées` : "Facture ajoutée");
+    renderDocs();
+  } catch(err){ toast("Impossible d’ajouter ce fichier (espace insuffisant ?)"); }
+});
+async function renderDocs(){
+  const all = (await filesOf("invoice")).sort((a, b) => b.date.localeCompare(a.date) || b.added - a.added);
+  const cats = ["Toutes", ...DOC_CATS.filter(c => all.some(f => f.cat === c))];
+  if (!cats.includes(docFilter)) docFilter = "Toutes";
+  const fl = $("#docFilters"); fl.innerHTML = "";
+  if (all.length) cats.forEach(c => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "chip";
+    b.textContent = c; b.setAttribute("aria-pressed", c === docFilter);
+    b.onclick = () => { docFilter = c; renderDocs(); };
+    fl.append(b);
+  });
+  const shown = all.filter(f => docFilter === "Toutes" || f.cat === docFilter);
+  const total = shown.reduce((s, f) => s + (f.amount || 0), 0);
+  $("#docTotal").innerHTML = shown.length
+    ? `<span class="muted">${plural(shown.length, "document", "documents")}</span><strong>${total ? "Total : " + euro(total) : ""}</strong>` : "";
+  const list = $("#docList"); list.innerHTML = "";
+  if (!all.length){ list.innerHTML = `<div class="empty">Aucune facture pour l’instant. Ajoutez la première avec le formulaire ci-dessus.</div>`; return; }
+  shown.forEach(f => {
+    const it = document.createElement("div"); it.className = "item clickable"; it.tabIndex = 0;
+    const icon = (f.type || "").startsWith("image/")
+      ? `<img class="thumb" alt="" src="${blobUrl("f:"+f.id, f.data, f.type)}">`
+      : `<div class="ftype">${esc(typeLabel(f))}</div>`;
+    it.innerHTML = `${icon}<div class="grow"><div class="title">${esc(f.name)}</div>
+      <div class="meta">${esc(f.cat)} · ${fmt(f.date)}${f.amount != null ? " · " + euro(f.amount) : ""}</div></div>`;
+    const del = document.createElement("button"); del.className = "danger"; del.textContent = "Supprimer";
+    del.setAttribute("aria-label", "Supprimer " + f.name);
+    del.onclick = async ev => {
+      ev.stopPropagation();
+      if (await askConfirm(`Supprimer « ${f.name} » ?`)){ await fileDel(f.id); dropUrl("f:"+f.id); toast("Facture supprimée"); renderDocs(); }
+    };
+    it.append(del);
+    it.onclick = () => openDocViewer(f);
+    it.onkeydown = ev => { if (ev.key === "Enter") openDocViewer(f); };
+    list.append(it);
+  });
+}
+let viewerUrl = null;
+async function openDocViewer(f){
+  const blob = new Blob([f.data], {type: f.type || "application/octet-stream"});
+  viewerUrl = URL.createObjectURL(blob);
+  $("#viewerTitle").textContent = f.name;
+  const body = $("#viewerBody"); body.innerHTML = "";
+  const t = f.type || "";
+  if (t.startsWith("image/")){
+    const img = new Image(); img.className = "full"; img.src = viewerUrl; img.alt = f.name; body.append(img);
+  } else if (t === "application/pdf"){
+    const fr = document.createElement("iframe"); fr.src = viewerUrl; fr.title = f.name; body.append(fr);
+    const p = document.createElement("p"); p.className = "muted"; p.style.fontSize = ".88rem";
+    p.textContent = "Si le PDF ne s’affiche pas ici (fréquent sur Android), utilisez « Ouvrir » ci-dessous.";
+    body.append(p);
+  } else if (t.startsWith("text/") || /\.(txt|csv|md)$/i.test(f.name)){
+    const pre = document.createElement("pre"); pre.textContent = await blob.text(); body.append(pre);
+  } else {
+    body.innerHTML = `<p class="muted">Ce type de document ne peut pas être affiché directement. Ouvrez-le ou téléchargez-le avec les boutons ci-dessous.</p>`;
+  }
+  $("#viewerActions").innerHTML =
+    `<a class="ghost" href="${viewerUrl}" target="_blank" rel="noopener">Ouvrir</a>
+     <a class="primary" href="${viewerUrl}" download="${esc(f.name)}">Télécharger</a>`;
+  openSheet("#viewer");
+}
+
+/* ---------- Soins ---------- */
+const DOSE_NAMES = { 1:["Dose"], 2:["Matin","Soir"], 3:["Matin","Midi","Soir"] };
+const careStatus = (t, today) => today < t.start ? "soon" : today > t.end ? "off" : "on";
+onSubmit("#careForm", () => {
+  const start = $("#careStart").value, end = $("#careEnd").value;
+  if (end < start){ toast("La date de fin doit être après la date de début"); return; }
+  hd.treatments.push({ id: uid(), name: $("#careName").value.trim(), start, end, freq: +$("#careFreq").value, taken: {} });
+  save(); $("#careName").value = ""; toast("Traitement ajouté"); renderCare();
+});
+$("#careStart").addEventListener("change", () => {
+  if (!$("#careEnd").value || $("#careEnd").value < $("#careStart").value) $("#careEnd").value = $("#careStart").value;
+});
+function renderCare(){
+  const today = todayISO();
+  const active = hd.treatments.filter(t => careStatus(t, today) === "on");
+  const td = $("#todayDoses"); td.innerHTML = "";
+  if (!active.length) td.innerHTML = `<div class="empty">Aucun traitement en cours aujourd’hui.</div>`;
+  active.forEach(t => {
+    const taken = t.taken[today] || [];
+    const it = document.createElement("div"); it.className = "item";
+    it.innerHTML = `<div class="grow"><div class="title">${esc(t.name)}</div>
+      <div class="meta">Jour ${daysBetween(t.start, today) + 1} sur ${daysBetween(t.start, t.end) + 1}</div>
+      <div class="doses"></div></div>`;
+    const box = it.querySelector(".doses");
+    DOSE_NAMES[t.freq].forEach((label, i) => {
+      const l = document.createElement("label"); l.className = "dose";
+      const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = !!taken[i];
+      cb.addEventListener("change", () => {
+        const arr = t.taken[today] || []; arr[i] = cb.checked; t.taken[today] = arr; save();
+        if (DOSE_NAMES[t.freq].every((_, j) => arr[j])) toast("Toutes les doses du jour sont données");
+      });
+      l.append(cb, document.createTextNode(label)); box.append(l);
+    });
+    td.append(it);
+  });
+  const order = { on:0, soon:1, off:2 };
+  const all = [...hd.treatments].sort((a, b) => order[careStatus(a,today)] - order[careStatus(b,today)] || b.start.localeCompare(a.start));
+  const list = $("#careList"); list.innerHTML = "";
+  if (!all.length){ list.innerHTML = `<div class="empty">Aucun traitement enregistré.</div>`; return; }
+  const pillText = { on:"En cours", soon:"À venir", off:"Terminé" };
+  all.forEach(t => {
+    const st = careStatus(t, today);
+    const pr = treatProgress(t);
+    const it = document.createElement("div"); it.className = "item clickable"; it.tabIndex = 0;
+    it.innerHTML = `<div class="grow"><div class="title">${esc(t.name)}<span class="pill ${st}">${pillText[st]}</span></div>
+      <div class="meta">Du ${fmt(t.start, {day:"numeric",month:"short"})} au ${fmt(t.end)} · ${t.freq} fois par jour · ${pr.done}/${pr.total} doses</div></div>`;
+    it.onclick = () => openTreatment(t);
+    it.onkeydown = ev => { if (ev.key === "Enter") openTreatment(t); };
+    const del = document.createElement("button"); del.className = "danger"; del.textContent = "Supprimer";
+    del.onclick = async ev => {
+      ev.stopPropagation();
+      if (await askConfirm(`Supprimer le traitement « ${t.name} » ?`)){
+        hd.treatments = hd.treatments.filter(x => x.id !== t.id); save(); toast("Traitement supprimé"); renderCare();
+      }
+    };
+    it.append(del); list.append(it);
+  });
+}
+
+function treatProgress(t){
+  const today = todayISO(), n = daysBetween(t.start, t.end) + 1;
+  let done = 0, missed = 0;
+  for (let i = 0; i < n; i++){
+    const k = iso(addDays(parse(t.start), i)), arr = t.taken[k] || [];
+    for (let j = 0; j < t.freq; j++){
+      if (arr[j]) done++; else if (k < today) missed++;
+    }
+  }
+  return { done, missed, total: n * t.freq };
+}
+function openTreatment(t){
+  const today = todayISO(), n = daysBetween(t.start, t.end) + 1, labels = DOSE_NAMES[t.freq];
+  $("#viewerTitle").textContent = t.name;
+  const body = $("#viewerBody"); body.innerHTML = "";
+  const info = document.createElement("p"); info.className = "muted"; info.style.margin = "0 0 6px";
+  info.textContent = `Du ${fmt(t.start)} au ${fmt(t.end)} · ${t.freq} fois par jour`;
+  const prog = document.createElement("p"); prog.className = "progress";
+  const updateProg = () => {
+    const p = treatProgress(t);
+    prog.innerHTML = `<strong>${p.done} sur ${p.total} doses données</strong>` +
+      (p.missed ? ` · <span class="missed">${plural(p.missed, "dose oubliée", "doses oubliées")}</span>` : "");
+  };
+  const rows = document.createElement("div"); rows.className = "track";
+  for (let i = 0; i < n; i++){
+    const k = iso(addDays(parse(t.start), i)), future = k > today;
+    const row = document.createElement("div");
+    row.className = "track-row" + (k === today ? " today" : "") + (future ? " future" : "");
+    row.innerHTML = `<div class="tdate"><strong>${cap(fmt(k, {weekday:"long", day:"numeric", month:"short"}))}${k === today ? " · aujourd’hui" : ""}</strong>
+      <span>Jour ${i + 1} sur ${n}</span></div><div class="doses"></div>`;
+    const box = row.querySelector(".doses");
+    labels.forEach((label, j) => {
+      const l = document.createElement("label"); l.className = "dose";
+      const cb = document.createElement("input"); cb.type = "checkbox";
+      cb.checked = !!(t.taken[k] || [])[j]; cb.disabled = future;
+      cb.setAttribute("aria-label", `${label}, ${fmt(k, {weekday:"long", day:"numeric", month:"long"})}`);
+      cb.addEventListener("change", () => {
+        const arr = t.taken[k] || []; arr[j] = cb.checked; t.taken[k] = arr;
+        save(); updateProg(); renderCare();
+      });
+      l.append(cb, document.createTextNode(label)); box.append(l);
+    });
+    rows.append(row);
+  }
+  updateProg();
+  body.append(info, prog, rows);
+  $("#viewerActions").innerHTML = `<button class="primary" type="button" data-close>Fermer</button>`;
+  openSheet("#viewer");
+  const tr = rows.querySelector(".today");
+  if (tr) setTimeout(() => tr.scrollIntoView({block:"center"}), 60);
+}
+
+/* ---------- Maréchal ---------- */
+const nextShoe = s => iso(addDays(parse(s.date), s.interval * 7));
+const latestShoe = () => [...hd.shoeing].sort((a, b) => b.date.localeCompare(a.date))[0];
+function updatePreview(){
+  const d = $("#shoeDate").value, n = parseInt($("#shoeInterval").value, 10);
+  $("#shoePreview").textContent = d && n > 0
+    ? `Prochaine ferrure prévue le ${fmt(nextShoe({date:d, interval:n}), {weekday:"long", day:"numeric", month:"long", year:"numeric"})}.`
+    : "Indiquez la date et l’intervalle pour calculer la prochaine ferrure.";
+}
+$("#shoeDate").addEventListener("input", updatePreview);
+$("#shoeInterval").addEventListener("input", updatePreview);
+onSubmit("#farrierForm", () => {
+  const n = parseInt($("#shoeInterval").value, 10); if (!(n > 0)) return;
+  hd.shoeing.push({ id: uid(), date: $("#shoeDate").value, interval: n, note: $("#shoeNote").value.trim() });
+  save(); $("#shoeNote").value = ""; toast("Ferrure enregistrée"); renderFarrier();
+});
+function renderFarrier(){
+  const last = latestShoe(), box = $("#farrierStatus");
+  if (!last){
+    box.innerHTML = `<div class="empty">Aucune ferrure enregistrée. Indiquez la date de la dernière ferrure ci-dessous.</div>`;
+  } else {
+    const next = nextShoe(last), left = daysBetween(todayISO(), next);
+    let status, color;
+    if (left < 0){ status = `En retard de ${plural(-left, "jour", "jours")}`; color = "var(--alert)"; }
+    else if (left === 0){ status = "C’est aujourd’hui"; color = "var(--warn)"; }
+    else if (left <= 7){ status = `Dans ${plural(left, "jour", "jours")} — pensez à appeler le maréchal`; color = "var(--warn)"; }
+    else { status = `Dans ${plural(left, "jour", "jours")}`; color = "var(--accent)"; }
+    box.innerHTML = `<div class="horseshoe" style="--c:${color}">
+      <div class="big">${cap(fmt(next, {weekday:"long", day:"numeric", month:"long"}))}</div>
+      <div class="status">${status}</div>
+      <dl><dt>Dernière ferrure</dt><dd>${fmt(last.date)}</dd>
+      <dt>Intervalle</dt><dd>${plural(last.interval, "semaine", "semaines")}</dd></dl></div>`;
+  }
+  if (!$("#shoeInterval").value) $("#shoeInterval").value = last ? last.interval : 6;
+  updatePreview();
+  const list = $("#shoeList"); list.innerHTML = "";
+  const all = [...hd.shoeing].sort((a, b) => b.date.localeCompare(a.date));
+  if (!all.length){ list.innerHTML = `<div class="empty">L’historique apparaîtra ici.</div>`; return; }
+  all.forEach(s => {
+    const it = document.createElement("div"); it.className = "item";
+    it.innerHTML = `<div class="grow"><div class="title">${fmt(s.date)}</div>
+      <div class="meta">Intervalle ${plural(s.interval, "semaine", "semaines")}${s.note ? " · " + esc(s.note) : ""}</div></div>`;
+    const del = document.createElement("button"); del.className = "danger"; del.textContent = "Supprimer";
+    del.onclick = async () => {
+      if (await askConfirm("Supprimer cette ferrure de l’historique ?")){
+        hd.shoeing = hd.shoeing.filter(x => x.id !== s.id); save(); renderFarrier();
+      }
+    };
+    it.append(del); list.append(it);
+  });
+}
+
+/* ---------- Photos ---------- */
+onSubmit("#photoForm", async () => {
+  const files = [...$("#photoFile").files]; if (!files.length) return;
+  const btn = $("#photoForm [data-submit]"); btn.disabled = true; btn.textContent = "Ajout en cours…";
+  try {
+    for (const file of files){
+      const p = await resizeImage(file, 2000, 0.85);
+      await filePut({ id: uid(), horseId: cur.id, kind:"photo", name: file.name, type: p.type, data: p.data,
+        date: $("#photoDate").value, caption: $("#photoCaption").value.trim(), added: Date.now() });
+    }
+    $("#photoFile").value = ""; $("#photoCaption").value = "";
+    toast(files.length > 1 ? `${files.length} photos ajoutées` : "Photo ajoutée");
+    renderPhotos();
+  } catch(err){ toast("Impossible d’ajouter ces photos (espace insuffisant ?)"); }
+  finally { btn.disabled = false; btn.textContent = "Ajouter les photos"; }
+});
+async function renderPhotos(){
+  const all = (await filesOf("photo")).sort((a, b) => b.date.localeCompare(a.date) || b.added - a.added);
+  const wrap = $("#galleryWrap"); wrap.innerHTML = "";
+  if (!all.length){ wrap.innerHTML = `<h2>Galerie</h2><div class="empty">Aucune photo de ${esc(cur.name)} pour l’instant.</div>`; return; }
+  const groups = {};
+  all.forEach(p => { const k = p.date.slice(0, 7); (groups[k] = groups[k] || []).push(p); });
+  Object.entries(groups).forEach(([k, items]) => {
+    const h = document.createElement("h3");
+    h.textContent = cap(parse(k + "-01").toLocaleDateString("fr-FR", {month:"long", year:"numeric"}));
+    const g = document.createElement("div"); g.className = "gallery";
+    items.forEach(p => {
+      const b = document.createElement("button"); b.type = "button";
+      b.setAttribute("aria-label", p.caption || ("Photo du " + fmt(p.date)));
+      b.innerHTML = `<img alt="" loading="lazy" src="${blobUrl("f:"+p.id, p.data, p.type)}">`;
+      b.onclick = () => openPhotoViewer(p);
+      g.append(b);
+    });
+    wrap.append(h, g);
+  });
+}
+function openPhotoViewer(p){
+  const url = blobUrl("f:"+p.id, p.data, p.type);
+  $("#viewerTitle").textContent = p.caption || cur.name;
+  $("#viewerBody").innerHTML = `<img class="full" alt="${esc(p.caption || "")}" src="${url}">
+    <div class="caption"><div class="meta">${fmt(p.date, {weekday:"long", day:"numeric", month:"long", year:"numeric"})}</div></div>`;
+  const ext = p.type === "image/jpeg" ? "jpg" : (p.type.split("/")[1] || "jpg");
+  const fname = `${cur.name}-${p.date}.${ext}`.replace(/[^\wÀ-ÿ.-]+/g, "-");
+  $("#viewerActions").innerHTML = `<button class="ghost" type="button" id="delPhoto" style="color:var(--alert)">Supprimer</button>
+    <a class="primary" href="${url}" download="${esc(fname)}">Télécharger</a>`;
+  $("#delPhoto").onclick = async () => {
+    if (!(await askConfirm("Supprimer cette photo ?"))) return;
+    await fileDel(p.id); closeSheet($("#viewer")); dropUrl("f:"+p.id); toast("Photo supprimée"); renderPhotos();
+  };
+  openSheet("#viewer");
+}
+
+/* ---------- Sauvegarde ---------- */
+$("#openBackup").onclick = () => openSheet("#backupSheet");
+function bufToB64(buf){
+  const b = new Uint8Array(buf); let s = "";
+  for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+function b64ToBuf(b64){
+  const s = atob(b64), b = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+  return b.buffer;
+}
+$("#exportBtn").onclick = async () => {
+  const states = {};
+  for (const h of horses) states[h.id] = (await kvGet("horse:" + h.id)) || emptyHorseData();
+  const out = {
+    app:"carnet-cheval", version:2, exported:new Date().toISOString(),
+    horses: horses.map(h => ({ ...h, photo: h.photo ? { ...h.photo, data: bufToB64(h.photo.data) } : null })),
+    states,
+    files: (await fileAll()).map(f => ({ ...f, data: bufToB64(f.data) }))
+  };
+  const fname = `sauvegarde-chevaux-${todayISO()}.json`, json = JSON.stringify(out);
+  // Sur iPhone, la feuille de partage permet « Enregistrer dans Fichiers »
+  try {
+    const file = new File([json], fname, {type:"application/json"});
+    if (IS_IOS && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:"Sauvegarde Suivi cheval"});
+      toast("Sauvegarde exportée"); return;
+    }
+  } catch(e){ if (e && e.name === "AbortError") return; }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([json], {type:"application/json"}));
+  a.download = fname;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast("Sauvegarde exportée");
+};
+$("#importFile").addEventListener("change", async e => {
+  const file = e.target.files[0]; if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (data.app !== "carnet-cheval") throw new Error("format");
+    if (!(await askConfirm("Remplacer toutes les données actuelles par cette sauvegarde ?", "Remplacer"))) return;
+    await kvClear(); await fileClear(); urlCache.forEach(u => URL.revokeObjectURL(u)); urlCache.clear();
+    if (data.version === 1){
+      const id = uid(), s = data.state || {};
+      horses = [{ id, name: s.horse || "Mon cheval", photo:null, created: Date.now() }];
+      await kvSet("horse:" + id, { activities: s.activities || {}, treatments: s.treatments || [], shoeing: s.shoeing || [] });
+      for (const f of data.files || []) await filePut({ ...f, horseId:id, kind:"invoice", data: b64ToBuf(f.data) });
+    } else {
+      horses = (data.horses || []).map(h => ({ ...h, photo: h.photo ? { ...h.photo, data: b64ToBuf(h.photo.data) } : null }));
+      for (const h of horses) await kvSet("horse:" + h.id, normalizeHorseData((data.states || {})[h.id]));
+      for (const f of data.files || []) await filePut({ ...f, data: b64ToBuf(f.data) });
+    }
+    await saveHorses();
+    closeSheet($("#backupSheet")); showHome(); toast("Sauvegarde importée");
+  } catch(err){ toast("Ce fichier n’est pas une sauvegarde valide"); }
+  finally { e.target.value = ""; }
+});
+
+/* ---------- Installation sur l’écran d’accueil ---------- */
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const IS_STANDALONE = navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+function showInstallTip(){
+  const box = $("#installTip");
+  let dismissed = false; try { dismissed = localStorage.getItem("installTipHidden") === "1"; } catch(e){}
+  if (IS_STANDALONE || dismissed) return;
+  let msg = "";
+  if (location.protocol === "file:" && IS_IOS)
+    msg = "Sur iPhone, les données ne peuvent pas être conservées quand le fichier est ouvert ainsi. Ouvrez plutôt le lien de l’application dans Safari, puis ajoutez-la à l’écran d’accueil.";
+  else if (location.protocol === "https:" && IS_IOS)
+    msg = "Pour garder vos données en sécurité, installez l’application : touchez le bouton Partager <strong>⬆︎</strong> de Safari, puis <strong>« Sur l’écran d’accueil »</strong>. Ouvrez ensuite toujours Suivi cheval depuis son icône.";
+  else if (location.protocol === "https:")
+    msg = "Astuce : dans le menu du navigateur, choisissez <strong>« Ajouter à l’écran d’accueil »</strong> ou <strong>« Installer l’application »</strong> pour l’avoir comme une vraie appli.";
+  if (!msg) return;
+  box.innerHTML = `<p>${msg}</p><button type="button" aria-label="Masquer ce conseil">✕</button>`;
+  box.querySelector("button").onclick = () => { box.hidden = true; try { localStorage.setItem("installTipHidden","1"); } catch(e){} };
+  box.hidden = false;
+}
+
+
+/* =====================================================================
+   SÉANCE : mesure des allures (accéléromètre + GPS)
+   ===================================================================== */
+const GAITS = {
+  arret: { label:"Arrêt", color:"#9A8F82" },
+  pas:   { label:"Pas",   color:"#3C8FA0" },
+  trot:  { label:"Trot",  color:"#D19A22" },
+  galop: { label:"Galop", color:"#C0563A" }
+};
+const GAIT_KEYS = ["arret","pas","trot","galop"];
+// Seuils de détection (ajustables après les essais à cheval)
+const GAIT_CFG = {
+  rmsStill: 0.6,     // m/s² : en dessous, le cheval est à l’arrêt
+  rmsWalk: 2.4,      // m/s² : en dessous, le cheval est au pas
+  freqTrot: 2.3,     // Hz : au-dessus, rebond de trot ; en dessous, galop
+  spdStill: 1.5,     // km/h
+  spdWalkMax: 7,     // km/h : plus lent = forcément pas (si GPS fiable)
+  spdCanterMin: 20,  // km/h : plus rapide = forcément galop (si GPS fiable)
+  gpsGoodAcc: 20     // m : précision GPS jugée fiable
+};
+
+/* --- Analyse d’une fenêtre de mesures : énergie et cadence --- */
+// samples : [{t (ms), m (|accélération| en m/s²)}] sur ~4 secondes
+function motionFeatures(samples){
+  if (samples.length < 40) return null;
+  const t0 = samples[0].t, t1 = samples[samples.length - 1].t, dur = (t1 - t0) / 1000;
+  if (dur < 2.5) return null;
+  const FS = 50, n = Math.floor(dur * FS), x = new Float64Array(n);
+  let j = 0;
+  for (let i = 0; i < n; i++){                       // rééchantillonnage régulier à 50 Hz
+    const t = t0 + i * 1000 / FS;
+    while (j < samples.length - 2 && samples[j + 1].t < t) j++;
+    const a = samples[j], b = samples[j + 1], f = b.t > a.t ? (t - a.t) / (b.t - a.t) : 0;
+    x[i] = a.m + (b.m - a.m) * Math.max(0, Math.min(1, f));
+  }
+  let mean = 0; for (let i = 0; i < n; i++) mean += x[i]; mean /= n;
+  let energy = 0; for (let i = 0; i < n; i++){ x[i] -= mean; energy += x[i] * x[i]; }
+  const rms = Math.sqrt(energy / n);
+  // Autocorrélation sur 1 à 4 Hz : cadence dominante du mouvement
+  const minLag = Math.round(FS / 4), maxLag = Math.round(FS / 1);
+  const ac = [];
+  for (let lag = minLag; lag <= maxLag && lag < n - 10; lag++){
+    let s = 0; for (let i = 0; i + lag < n; i++) s += x[i] * x[i + lag];
+    ac.push({ lag, v: energy ? s / energy * n / (n - lag) : 0 });
+  }
+  let best = null;
+  for (const a of ac) if (!best || a.v > best.v) best = a;
+  let freq = null, clarity = best ? best.v : 0;
+  if (best && best.v > 0.25){
+    // Premier pic marqué (évite de prendre la demi-cadence pour la cadence)
+    let pick = best;
+    for (let k = 1; k < ac.length - 1; k++){
+      const a = ac[k];
+      if (a.v >= ac[k - 1].v && a.v >= ac[k + 1].v && a.v >= 0.6 * best.v){ pick = a; break; }
+    }
+    freq = FS / pick.lag;
+  }
+  return { rms, freq, clarity };
+}
+
+/* --- Décision d’allure à partir du mouvement et de la vitesse --- */
+function classifyGait(feat, speedKmh, gpsGood){
+  const c = GAIT_CFG, hasSpd = gpsGood && speedKmh != null;
+  if (!feat){                                         // pas de capteur : vitesse seule
+    if (!hasSpd) return null;
+    return speedKmh < c.spdStill ? "arret" : speedKmh < 8 ? "pas" : speedKmh < 16 ? "trot" : "galop";
+  }
+  let g;
+  if (feat.rms < c.rmsStill) g = "arret";
+  else if (feat.rms < c.rmsWalk) g = "pas";
+  // Cadence < 1,55 Hz : c’est la foulée complète du trot (2 rebonds par foulée), pas un galop
+  else g = (feat.freq != null && (feat.freq >= c.freqTrot || feat.freq < 1.55)) ? "trot" : "galop";
+  if (hasSpd){
+    if (speedKmh < c.spdStill && feat.rms < c.rmsWalk) g = "arret";
+    else if (g === "arret" && speedKmh > 3) g = "pas";
+    if ((g === "trot" || g === "galop") && speedKmh < c.spdWalkMax) g = "pas";
+    if (speedKmh > c.spdCanterMin) g = "galop";
+  }
+  return g;
+}
+
+/* --- Outils GPS --- */
+function haversine(a, b){
+  const R = 6371000, toR = d => d * Math.PI / 180;
+  const dLat = toR(b.lat - a.lat), dLon = toR(b.lon - a.lon);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(toR(a.lat)) * Math.cos(toR(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+const fmtDur = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  return h ? `${h} h ${String(m).padStart(2,"0")}` : `${m} min ${String(x).padStart(2,"0")}`; };
+const fmtClock = s => { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  return (h ? h + ":" + String(m).padStart(2,"0") : String(m)) + ":" + String(x).padStart(2,"0"); };
+const fmtKmh = v => v == null ? "–" : v.toLocaleString("fr-FR", {maximumFractionDigits:1, minimumFractionDigits:1}) + " km/h";
+const fmtDist = m => m >= 1000 ? (m / 1000).toLocaleString("fr-FR", {maximumFractionDigits:2}) + " km" : Math.round(m) + " m";
+
+/* --- Enregistreur --- */
+let rec = null;   // séance en cours
+function newRecorder(useMap){
+  return {
+    horseId: cur.id, horseName: cur.name, useMap,
+    startTs: Date.now(), lastTick: Date.now(),
+    samples: [], feat: null, motionSeen: false,
+    gpsWatch: null, lastFix: null, lastGood: null, speedHist: [], speed: null, gpsAcc: null,
+    distance: 0, maxSpeed: 0, gpsSpeedSum: {}, gpsSpeedN: {},
+    secs: { arret:0, pas:0, trot:0, galop:0 }, unmeasured: 0,
+    votes: [], gait: null, segments: [], track: [],
+    hiddenSince: null, wakeLock: null, timer: null, saveTimer: null
+  };
+}
+function onMotion(e){
+  if (!rec) return;
+  const a = e.accelerationIncludingGravity || e.acceleration;
+  if (!a || a.x == null) return;
+  rec.motionSeen = true;
+  const t = performance.now();
+  rec.samples.push({ t, m: Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z) });
+  while (rec.samples.length && t - rec.samples[0].t > 4000) rec.samples.shift();
+}
+function onFix(p){
+  if (!rec) return;
+  const c = p.coords, fix = { t: p.timestamp || Date.now(), lat: c.latitude, lon: c.longitude, acc: c.accuracy };
+  rec.gpsAcc = c.accuracy;
+  const good = c.accuracy <= GAIT_CFG.gpsGoodAcc;
+  let spd = (c.speed != null && !isNaN(c.speed) && c.speed >= 0) ? c.speed * 3.6 : null;
+  if (good && rec.lastGood){
+    const d = haversine(rec.lastGood, fix), dt = (fix.t - rec.lastGood.t) / 1000;
+    if (spd == null && dt > 0.5) spd = d / dt * 3.6;
+    // Distance : on ignore les micro-déplacements dus au bruit GPS et les sauts impossibles
+    const jitter = Math.max(2, Math.min(c.accuracy, rec.lastGood.acc) * 0.5);
+    if (dt > 0 && d / dt < 20 && (d > jitter || (rec.gait && rec.gait !== "arret" && d > 1))){
+      rec.distance += d; rec.lastGood = fix;
+    } else if (dt > 30) rec.lastGood = fix;
+  } else if (good) rec.lastGood = fix;
+  if (spd != null && good){
+    rec.speedHist.push(spd); if (rec.speedHist.length > 5) rec.speedHist.shift();
+    const sorted = [...rec.speedHist].sort((a, b) => a - b);
+    const med = sorted[Math.floor(sorted.length / 2)];
+    rec.speed = rec.speed == null ? med : rec.speed * 0.4 + med * 0.6;
+    if (rec.speedHist.length >= 3 && rec.speed > rec.maxSpeed && rec.speed < 70) rec.maxSpeed = rec.speed;
+  } else if (!good) rec.speed = rec.speed;   // on garde la dernière vitesse fiable
+  if (rec.useMap && good){
+    const last = rec.track[rec.track.length - 1];
+    const gi = Math.max(0, GAIT_KEYS.indexOf(rec.gait || "pas"));
+    if (!last || haversine({lat:last[0], lon:last[1]}, fix) > 3 || last[2] !== gi)
+      rec.track.push([+fix.lat.toFixed(6), +fix.lon.toFixed(6), gi]);
+  }
+  rec.lastFix = fix;
+}
+function recTick(){
+  if (!rec) return;
+  const now = Date.now(), dt = Math.min(5, (now - rec.lastTick) / 1000);
+  rec.lastTick = now;
+  if (document.visibilityState === "hidden") return;
+  const gpsGood = rec.gpsAcc != null && rec.gpsAcc <= GAIT_CFG.gpsGoodAcc && rec.lastFix && now - rec.lastFix.t < 8000;
+  rec.feat = motionFeatures(rec.samples);
+  const raw = classifyGait(rec.motionSeen ? rec.feat : null, rec.speed, gpsGood);
+  if (raw){ rec.votes.push(raw); if (rec.votes.length > 3) rec.votes.shift(); }
+  // Lissage : l’allure change quand elle est majoritaire sur les 3 dernières secondes
+  const count = {}; rec.votes.forEach(v => count[v] = (count[v] || 0) + 1);
+  const top = Object.entries(count).sort((a, b) => b[1] - a[1])[0];
+  if (top && (top[1] >= 2 || !rec.gait)) rec.gait = top[0];
+  const el = (now - rec.startTs) / 1000;
+  if (rec.gait){
+    rec.secs[rec.gait] += dt;
+    const seg = rec.segments[rec.segments.length - 1];
+    if (seg && seg.g === rec.gait && Math.abs(seg.e - (el - dt)) < 2) seg.e = el;
+    else rec.segments.push({ g: rec.gait, s: el - dt, e: el });
+    if (rec.speed != null && gpsGood){ rec.gpsSpeedSum[rec.gait] = (rec.gpsSpeedSum[rec.gait] || 0) + rec.speed; rec.gpsSpeedN[rec.gait] = (rec.gpsSpeedN[rec.gait] || 0) + 1; }
+  } else rec.unmeasured += dt;
+  drawLive();
+}
+async function keepAwake(){
+  try { if ("wakeLock" in navigator && rec && document.visibilityState === "visible") rec.wakeLock = await navigator.wakeLock.request("screen"); } catch(e){}
+}
+document.addEventListener("visibilitychange", () => {
+  if (!rec) return;
+  if (document.visibilityState === "hidden"){ rec.hiddenSince = Date.now(); saveDraft(); }
+  else {
+    if (rec.hiddenSince){
+      const gap = (Date.now() - rec.hiddenSince) / 1000;
+      rec.unmeasured += gap; rec.lastTick = Date.now(); rec.hiddenSince = null; rec.votes = []; rec.samples = [];
+      toast(`Enregistrement repris (${fmtDur(gap)} non mesurées)`, 3500);
+    }
+    keepAwake();
+  }
+});
+
+/* --- Démarrer / terminer --- */
+async function startSession(){
+  if (!("geolocation" in navigator)){ toast("Ce téléphone ne permet pas la localisation"); return; }
+  try {   // iPhone : autorisation explicite des capteurs de mouvement
+    if (typeof DeviceMotionEvent !== "undefined" && typeof DeviceMotionEvent.requestPermission === "function"){
+      const r = await DeviceMotionEvent.requestPermission();
+      if (r !== "granted") toast("Capteurs de mouvement refusés : la détection utilisera le GPS seul", 4000);
+    }
+  } catch(e){}
+  rec = newRecorder($("#seanceMap").checked);
+  window.addEventListener("devicemotion", onMotion);
+  rec.gpsWatch = navigator.geolocation.watchPosition(onFix, err => {
+    if (err.code === 1) toast("Localisation refusée : autorisez-la pour mesurer vitesse et distance", 5000);
+  }, { enableHighAccuracy:true, maximumAge:0, timeout:20000 });
+  rec.timer = setInterval(recTick, 1000);
+  document.querySelector('nav button[data-tab="seance"]').classList.add("rec");
+  rec.saveTimer = setInterval(saveDraft, 15000);
+  keepAwake();
+  setTimeout(() => { if (rec && !rec.motionSeen) $("#liveWarn").textContent = "Capteurs de mouvement indisponibles : détection par le GPS seul."; }, 3000);
+  renderSeance();
+}
+function stopRecorder(){
+  if (!rec) return;
+  window.removeEventListener("devicemotion", onMotion);
+  if (rec.gpsWatch != null) navigator.geolocation.clearWatch(rec.gpsWatch);
+  clearInterval(rec.timer); clearInterval(rec.saveTimer);
+  try { rec.wakeLock && rec.wakeLock.release(); } catch(e){}
+  document.querySelector('nav button[data-tab="seance"]').classList.remove("rec");
+  $("#lockScreen").hidden = true; $("#liveWarn").textContent = "";
+}
+function buildSession(r){
+  const end = r.hiddenSince || Date.now();
+  const duration = (end - r.startTs) / 1000;
+  const moving = r.secs.pas + r.secs.trot + r.secs.galop;
+  const avgByGait = {};
+  GAIT_KEYS.forEach(g => { if (r.gpsSpeedN[g]) avgByGait[g] = +(r.gpsSpeedSum[g] / r.gpsSpeedN[g]).toFixed(1); });
+  const segs = r.segments.map(s => ({ g:s.g, s:Math.round(s.s), e:Math.round(s.e) })).filter(s => s.e > s.s);
+  return {
+    id: uid(), start: new Date(r.startTs).toISOString(), end: new Date(end).toISOString(),
+    duration: Math.round(duration), moving: Math.round(moving), unmeasured: Math.round(r.unmeasured),
+    secs: Object.fromEntries(GAIT_KEYS.map(g => [g, Math.round(r.secs[g])])),
+    distance: Math.round(r.distance),
+    avgSpeed: moving > 30 && r.distance > 20 ? +(r.distance / moving * 3.6).toFixed(1) : null,
+    maxSpeed: r.maxSpeed ? +r.maxSpeed.toFixed(1) : null,
+    avgByGait, segments: segs, map: r.useMap, track: r.useMap ? r.track : []
+  };
+}
+async function endSession(){
+  if (!(await askConfirm("Terminer la séance et enregistrer les statistiques ?", "Terminer"))) return;
+  stopRecorder();
+  const s = buildSession(rec);
+  const horseId = rec.horseId; rec = null;
+  await kvDel("seance-draft").catch(() => {});
+  if (s.duration < 10){ toast("Séance trop courte : non enregistrée"); renderSeance(); return; }
+  if (cur && cur.id === horseId){ hd.sessions.unshift(s); await save(); }
+  else {
+    const d = normalizeHorseData(await kvGet("horse:" + horseId)); d.sessions.unshift(s); await kvSet("horse:" + horseId, d);
+  }
+  renderSeance();
+  openSessionDetail(s);
+}
+/* Sauvegarde de secours, si le navigateur ferme la page pendant la séance */
+function saveDraft(){
+  if (!rec) return;
+  kvSet("seance-draft", { horseId: rec.horseId, session: buildSession(rec) }).catch(() => {});
+}
+async function checkDraft(){
+  const d = await kvGet("seance-draft").catch(() => null);
+  if (!d || rec) return;
+  const h = horses.find(x => x.id === d.horseId);
+  if (!h){ kvDel("seance-draft"); return; }
+  if (await askConfirm(`Une séance de ${h.name} a été interrompue (${fmtDur(d.session.duration)}). L’enregistrer avec les données mesurées jusque-là ?`, "Enregistrer")){
+    const data = normalizeHorseData(await kvGet("horse:" + h.id));
+    data.sessions.unshift(d.session); await kvSet("horse:" + h.id, data);
+    if (cur && cur.id === h.id) hd.sessions.unshift(d.session);
+    toast("Séance récupérée");
+  }
+  await kvDel("seance-draft");
+  if (cur && !$("#tab-seance").hidden) renderSeance();
+}
+
+/* --- Affichage --- */
+function gaitBar(secs, total){
+  total = total || GAIT_KEYS.reduce((a, g) => a + (secs[g] || 0), 0) || 1;
+  return `<div class="gbar">${GAIT_KEYS.map(g => secs[g] ? `<i style="width:${secs[g] / total * 100}%;background:${GAITS[g].color}" title="${GAITS[g].label}"></i>` : "").join("")}</div>`;
+}
+function renderSeance(){
+  const running = rec && cur && rec.horseId === cur.id;
+  $("#seanceIdle").hidden = !!running;
+  $("#seanceLive").hidden = !running;
+  if (running) drawLive();
+  const list = $("#seanceList"); list.innerHTML = "";
+  const all = hd.sessions || [];
+  if (!all.length){ list.innerHTML = `<div class="empty">Aucune séance enregistrée pour ${esc(cur.name)}.</div>`; return; }
+  all.forEach(s => {
+    const it = document.createElement("div"); it.className = "item clickable"; it.tabIndex = 0;
+    const d = new Date(s.start);
+    it.innerHTML = `<div class="grow"><div class="title">${cap(d.toLocaleDateString("fr-FR", {weekday:"long", day:"numeric", month:"long"}))} · ${d.toLocaleTimeString("fr-FR", {hour:"2-digit", minute:"2-digit"})}${s.map ? " 🗺️" : ""}</div>
+      <div class="meta">${fmtDur(s.duration)}${s.distance ? " · " + fmtDist(s.distance) : ""}${s.avgSpeed ? " · " + fmtKmh(s.avgSpeed) + " de moyenne" : ""}</div>
+      ${gaitBar(s.secs)}</div><span class="muted" aria-hidden="true">›</span>`;
+    it.onclick = () => openSessionDetail(s);
+    it.onkeydown = e => { if (e.key === "Enter") openSessionDetail(s); };
+    list.append(it);
+  });
+}
+function drawLive(){
+  if (!rec || !cur || rec.horseId !== cur.id || $("#tab-seance").hidden && $("#lockScreen").hidden) return;
+  const el = (Date.now() - rec.startTs) / 1000, g = rec.gait;
+  const gpsGood = rec.gpsAcc != null && rec.gpsAcc <= GAIT_CFG.gpsGoodAcc;
+  const label = g ? GAITS[g].label : "Analyse…", color = g ? GAITS[g].color : "var(--muted)";
+  $("#liveGait").textContent = label; $("#liveGait").style.color = color;
+  $("#liveClock").textContent = fmtClock(el);
+  $("#liveSpeed").textContent = fmtKmh(rec.speed);
+  $("#liveDist").textContent = fmtDist(rec.distance);
+  $("#liveGps").textContent = rec.gpsAcc == null ? "GPS : recherche…" : `GPS : ${gpsGood ? "bon" : "faible"} (± ${Math.round(rec.gpsAcc)} m)`;
+  $("#liveGps").className = "gps " + (rec.gpsAcc == null ? "" : gpsGood ? "ok" : "bad");
+  $("#liveBars").innerHTML = GAIT_KEYS.map(k => `<div class="lrow"><span><i style="background:${GAITS[k].color}"></i>${GAITS[k].label}</span><strong>${fmtClock(rec.secs[k])}</strong></div>`).join("");
+  $("#liveTech").textContent = rec.feat
+    ? `Énergie ${rec.feat.rms.toFixed(2)} m/s² · cadence ${rec.feat.freq ? rec.feat.freq.toFixed(2) + " Hz" : "–"} · netteté ${rec.feat.clarity.toFixed(2)}`
+    : (rec.motionSeen ? "Mesures en cours…" : "Aucune donnée de mouvement");
+  // Écran verrouillé
+  $("#lockGait").textContent = label; $("#lockGait").style.color = color;
+  $("#lockClock").textContent = fmtClock(el);
+  $("#lockSpeed").textContent = fmtKmh(rec.speed) + " · " + fmtDist(rec.distance);
+}
+let leafletLoading = null;
+function loadLeaflet(){
+  if (window.L) return Promise.resolve();
+  if (leafletLoading) return leafletLoading;
+  leafletLoading = new Promise((res, rej) => {
+    const css = document.createElement("link"); css.rel = "stylesheet";
+    css.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"; document.head.append(css);
+    const js = document.createElement("script"); js.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+    js.onload = res; js.onerror = () => { leafletLoading = null; rej(); }; document.head.append(js);
+  });
+  return leafletLoading;
+}
+async function drawMap(box, track){
+  try { await loadLeaflet(); } catch(e){ box.innerHTML = `<p class="muted" style="padding:12px">Carte indisponible sans connexion internet.</p>`; return; }
+  if (!box.isConnected) return;
+  const map = L.map(box, { zoomControl:true, attributionControl:true });
+  const plan = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom:19, attribution:"© OpenStreetMap" });
+  const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom:19, attribution:"© Esri" });
+  plan.addTo(map);
+  L.control.layers({ "Plan": plan, "Satellite": sat }, null, { position:"topright" }).addTo(map);
+  let run = [], gi = null; const all = [];
+  const flush = () => { if (run.length > 1) L.polyline(run, { color: GAITS[GAIT_KEYS[gi]].color, weight:5, opacity:.9 }).addTo(map); };
+  track.forEach(p => {
+    const ll = [p[0], p[1]]; all.push(ll);
+    if (p[2] !== gi){ if (run.length) run.push(ll); flush(); run = run.length ? [run[run.length - 1]] : []; gi = p[2]; }
+    run.push(ll);
+  });
+  flush();
+  L.circleMarker(all[0], { radius:7, color:"#fff", weight:2, fillColor:"#2E7D32", fillOpacity:1 }).addTo(map).bindTooltip("Départ");
+  L.circleMarker(all[all.length - 1], { radius:7, color:"#fff", weight:2, fillColor:"#2E241B", fillOpacity:1 }).addTo(map).bindTooltip("Arrivée");
+  map.fitBounds(L.latLngBounds(all), { padding:[20, 20] });
+  setTimeout(() => map.invalidateSize(), 200);
+}
+function openSessionDetail(s){
+  const d = new Date(s.start);
+  $("#viewerTitle").textContent = "Séance du " + d.toLocaleDateString("fr-FR", {day:"numeric", month:"long"}) + " à " + d.toLocaleTimeString("fr-FR", {hour:"2-digit", minute:"2-digit"});
+  const measured = GAIT_KEYS.reduce((a, g) => a + (s.secs[g] || 0), 0) || 1;
+  const body = $("#viewerBody");
+  body.innerHTML = `
+    <div class="stats">
+      <div><span>Durée</span><strong>${fmtDur(s.duration)}</strong></div>
+      <div><span>Distance</span><strong>${s.distance ? fmtDist(s.distance) : "–"}</strong></div>
+      <div><span>Vitesse moyenne</span><strong>${fmtKmh(s.avgSpeed)}</strong><em>hors arrêts</em></div>
+      <div><span>Vitesse maximale</span><strong>${fmtKmh(s.maxSpeed)}</strong></div>
+    </div>
+    <h3 style="margin:18px 0 8px">Allures</h3>
+    <table class="gtable"><thead><tr><th></th><th>Temps</th><th>%</th><th>Vitesse moy.</th></tr></thead><tbody>
+      ${GAIT_KEYS.map(g => `<tr><td><i style="background:${GAITS[g].color}"></i>${GAITS[g].label}</td><td>${fmtDur(s.secs[g] || 0)}</td><td>${Math.round((s.secs[g] || 0) / measured * 100)} %</td><td>${g === "arret" ? "–" : fmtKmh(s.avgByGait[g])}</td></tr>`).join("")}
+    </tbody></table>
+    ${s.unmeasured >= 5 ? `<p class="muted" style="font-size:.86rem;margin:8px 0 0">${fmtDur(s.unmeasured)} non mesurées (appli quittée ou écran éteint).</p>` : ""}
+    <h3 style="margin:18px 0 8px">Déroulé de la séance</h3>
+    <div class="frise">${s.segments.map(x => `<i style="left:${x.s / s.duration * 100}%;width:${Math.max(.3, (x.e - x.s) / s.duration * 100)}%;background:${GAITS[x.g].color}" title="${GAITS[x.g].label} ${fmtClock(x.s)} – ${fmtClock(x.e)}"></i>`).join("")}</div>
+    <div class="frise-axis"><span>0:00</span><span>${fmtClock(s.duration / 2)}</span><span>${fmtClock(s.duration)}</span></div>
+    ${s.map ? `<h3 style="margin:18px 0 8px">Parcours</h3>${s.track.length > 1 ? `<div class="mapbox" id="sessionMap"></div>` : `<p class="muted">Pas assez de points GPS pour tracer le parcours.</p>`}` : ""}`;
+  $("#viewerActions").innerHTML = `<button class="ghost" type="button" id="delSession" style="color:var(--alert)">Supprimer</button><button class="primary" type="button" data-close>Fermer</button>`;
+  $("#delSession").onclick = async () => {
+    if (!(await askConfirm("Supprimer cette séance de l’historique ?"))) return;
+    hd.sessions = hd.sessions.filter(x => x.id !== s.id); await save();
+    closeSheet($("#viewer")); renderSeance(); toast("Séance supprimée");
+  };
+  openSheet("#viewer");
+  if (s.map && s.track.length > 1) drawMap($("#sessionMap"), s.track);
+}
+
+/* --- Boutons --- */
+$("#startSeance").onclick = startSession;
+$("#endSeance").onclick = endSession;
+$("#lockBtn").onclick = () => { $("#lockScreen").hidden = false; drawLive(); };
+$("#techToggle").onchange = () => { $("#liveTech").hidden = !$("#techToggle").checked; };
+(() => {   // déverrouillage : maintenir appuyé 1,5 seconde
+  const zone = $("#unlockZone"); let t = null;
+  const startHold = e => { e.preventDefault(); zone.classList.add("holding"); t = setTimeout(() => { $("#lockScreen").hidden = true; zone.classList.remove("holding"); }, 1500); };
+  const cancel = () => { clearTimeout(t); zone.classList.remove("holding"); };
+  zone.addEventListener("pointerdown", startHold);
+  ["pointerup","pointerleave","pointercancel"].forEach(ev => zone.addEventListener(ev, cancel));
+  $("#lockScreen").addEventListener("contextmenu", e => e.preventDefault());
+})();
+
+/* ---------- Démarrage ---------- */
+(async function init(){
+  try { await openDB(); }
+  catch(e){ mem = { kv:{}, files:{} }; $("#storageBanner").hidden = false; }
+  try {
+    horses = (await kvGet("horses")) || [];
+    // Reprise des données de la première version (un seul cheval)
+    const old = await kvGet("state");
+    if (!horses.length && old){
+      const id = uid();
+      horses = [{ id, name: old.horse || "Mon cheval", photo:null, created: Date.now() }];
+      await kvSet("horse:" + id, { activities: old.activities || {}, treatments: old.treatments || [], shoeing: old.shoeing || [] });
+      for (const f of await fileAll()) if (!f.horseId) await filePut({ ...f, horseId:id, kind:"invoice" });
+      await saveHorses(); await kvDel("state");
+    }
+  } catch(e){}
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+  showInstallTip();
+  const t = todayISO();
+  ["#docDate","#careStart","#careEnd","#shoeDate","#photoDate"].forEach(id => { $(id).value = t; });
+  try { if (location.hash) history.replaceState(null, "", location.pathname + location.search); } catch(e){}
+  showHome();
+  checkDraft();
+})();
+</script>
+</body>
+</html>
