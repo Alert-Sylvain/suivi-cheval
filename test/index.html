@@ -247,8 +247,8 @@ nav button.rec span::after{content:"";display:inline-block;width:8px;height:8px;
 #unlockZone.holding::before{transform:scaleX(1);transition:transform 1.5s linear}
 
 /* ----- Suivi (sous-onglets) ----- */
-.subseg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--accent-soft);border-radius:12px;padding:4px;margin:8px 0 4px;position:sticky;top:0;z-index:5}
-.subseg button{border:none;background:none;padding:9px 2px;border-radius:9px;cursor:pointer;font-weight:600;color:var(--muted);font-size:.84rem}
+.subseg{display:flex;gap:2px;background:var(--accent-soft);border-radius:12px;padding:4px;margin:8px 0 4px;position:sticky;top:0;z-index:5}
+.subseg button{flex:1 1 auto;border:none;background:none;padding:9px 4px;border-radius:9px;cursor:pointer;font-weight:600;color:var(--muted);font-size:.78rem;white-space:nowrap}
 .subseg button[aria-selected=true]{background:var(--surface);color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .fchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .fchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 10px 4px 4px;font-size:.82rem;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
@@ -286,7 +286,7 @@ nav button.rec span::after{content:"";display:inline-block;width:8px;height:8px;
 .ref td,.ref th{border-top:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
 .ref th{font-size:.76rem;color:var(--muted)}
 .ref p{font-size:.84rem;margin:6px 0 12px}
-@media (max-width:380px){.seasons{grid-template-columns:1fr}.subseg button{font-size:.76rem}}
+@media (max-width:380px){.seasons{grid-template-columns:1fr}.subseg button{font-size:.72rem;padding:9px 2px}}
 </style>
 </head>
 <body>
@@ -390,7 +390,8 @@ nav button.rec span::after{content:"";display:inline-block;width:8px;height:8px;
         <button type="button" role="tab" data-sub="marechal" aria-selected="true">Maréchal</button>
         <button type="button" role="tab" data-sub="osteo" aria-selected="false">Ostéo</button>
         <button type="button" role="tab" data-sub="dentiste" aria-selected="false">Dentiste</button>
-        <button type="button" role="tab" data-sub="protocole" aria-selected="false">Protocole</button>
+        <button type="button" role="tab" data-sub="vaccins" aria-selected="false">Vaccins</button>
+        <button type="button" role="tab" data-sub="vermifuges" aria-selected="false">Vermifuges</button>
       </div>
       <div data-subpanel="marechal">
       <h2>Prochaine ferrure</h2>
@@ -444,7 +445,7 @@ nav button.rec span::after{content:"";display:inline-block;width:8px;height:8px;
         <h3>Historique</h3>
         <div class="list" id="dentisteList"></div>
       </div>
-      <div data-subpanel="protocole" hidden>
+      <div data-subpanel="vaccins" hidden>
         <h2>Vaccins : prochaines échéances</h2>
         <div class="due-grid" id="vaccDue"></div>
         <div class="panel" style="margin-top:10px;display:grid;gap:10px">
@@ -493,6 +494,21 @@ nav button.rec span::after{content:"";display:inline-block;width:8px;height:8px;
         <h3>Historique des injections</h3>
         <div class="list" id="injList"></div>
 
+        <details class="ref">
+          <summary>Schéma vaccinal de référence</summary>
+          <table><thead><tr><th>Étape</th><th>Délai</th><th>Vaccins</th></tr></thead><tbody>
+            <tr><td>Primo V1</td><td>Jour J</td><td>Grippe + Tétanos + Rhinopneumonie</td></tr>
+            <tr><td>Primo V2</td><td>21 à 92 jours après V1</td><td>Grippe + Tétanos + Rhinopneumonie</td></tr>
+            <tr><td>Primo V3</td><td>Au plus tard 6 mois (+21 j de tolérance) après V2</td><td>Grippe + Tétanos + Rhinopneumonie</td></tr>
+            <tr><td>Rappel 1</td><td>12 mois max après V3</td><td>Grippe + Rhinopneumonie + Tétanos</td></tr>
+            <tr><td>Rappel 2</td><td>12 mois max après le rappel précédent</td><td>Grippe + Rhinopneumonie</td></tr>
+            <tr><td>Rappel 3</td><td>12 mois max après le rappel précédent</td><td>Grippe + Rhinopneumonie + Tétanos (tous les 2 ou 3 ans selon le vaccin)</td></tr>
+            <tr><td>Rage</td><td>Dès 6 mois, puis tous les 12 mois</td><td>Rabisin, Nobivac Rabies</td></tr>
+          </tbody></table>
+          <p>Rhinopneumonie : obligatoire en FFE Amateur et Pro (pas en Club / Poney), rappel conseillé tous les 6 mois. FEI : rappel grippe dans les 6 mois + 21 jours avant une compétition. Aucune injection dans les 7 jours avant un concours. À valider avec votre vétérinaire.</p>
+        </details>
+      </div>
+      <div data-subpanel="vermifuges" hidden>
         <h2>Vermifuges</h2>
         <div class="yearnav"><button type="button" id="wormPrev" aria-label="Année précédente">‹</button><strong id="wormYear"></strong><button type="button" id="wormNext" aria-label="Année suivante">›</button></div>
         <div class="seasons" id="wormSeasons"></div>
@@ -515,23 +531,14 @@ nav button.rec span::after{content:"";display:inline-block;width:8px;height:8px;
         <div class="list" id="wormList"></div>
 
         <details class="ref">
-          <summary>Schéma de référence (vaccins et vermifuges)</summary>
-          <table><thead><tr><th>Étape</th><th>Délai</th><th>Vaccins</th></tr></thead><tbody>
-            <tr><td>Primo V1</td><td>Jour J</td><td>Grippe + Tétanos + Rhinopneumonie</td></tr>
-            <tr><td>Primo V2</td><td>21 à 92 jours après V1</td><td>Grippe + Tétanos + Rhinopneumonie</td></tr>
-            <tr><td>Primo V3</td><td>Au plus tard 6 mois (+21 j de tolérance) après V2</td><td>Grippe + Tétanos + Rhinopneumonie</td></tr>
-            <tr><td>Rappel 1</td><td>12 mois max après V3</td><td>Grippe + Rhinopneumonie + Tétanos</td></tr>
-            <tr><td>Rappel 2</td><td>12 mois max après le rappel précédent</td><td>Grippe + Rhinopneumonie</td></tr>
-            <tr><td>Rappel 3</td><td>12 mois max après le rappel précédent</td><td>Grippe + Rhinopneumonie + Tétanos (tous les 2 ou 3 ans selon le vaccin)</td></tr>
-            <tr><td>Rage</td><td>Dès 6 mois, puis tous les 12 mois</td><td>Rabisin, Nobivac Rabies</td></tr>
-          </tbody></table>
-          <p>Rhinopneumonie : obligatoire en FFE Amateur et Pro (pas en Club / Poney), rappel conseillé tous les 6 mois. FEI : rappel grippe dans les 6 mois + 21 jours avant une compétition. Aucune injection dans les 7 jours avant un concours. À valider avec votre vétérinaire.</p>
+          <summary>Calendrier de référence des vermifuges</summary>
           <table><thead><tr><th>Saison</th><th>Molécules</th><th>Quand</th></tr></thead><tbody>
             <tr><td>Printemps</td><td>Ivermectine ou Pyrantel</td><td>Si coproscopie &gt; 200 OPG</td></tr>
             <tr><td>Été</td><td>Pyrantel ou Ivermectine (alterner)</td><td>Si coproscopie &gt; 200 OPG</td></tr>
             <tr><td>Automne</td><td>Moxidectine + Praziquantel ou Ivermectine + Praziquantel</td><td>Systématique, après les premières gelées</td></tr>
             <tr><td>Hiver</td><td>Moxidectine (si non faite à l’automne) ou Fenbendazole 5 jours</td><td>Uniquement si fort risque de larves enkystées</td></tr>
           </tbody></table>
+          <p>Au printemps et en été, faire une coproscopie : traiter au-delà de 200 OPG. À valider avec votre vétérinaire.</p>
         </details>
       </div>
     </section>
@@ -1993,7 +2000,7 @@ function renderSuivi(){
   document.querySelectorAll("[data-subpanel]").forEach(p => { p.hidden = p.dataset.subpanel !== suiviSub; });
   if (suiviSub === "marechal") renderFarrier();
   else if (suiviSub === "osteo" || suiviSub === "dentiste") renderPractitioner(suiviSub);
-  else renderProtocol();
+  else renderProtocol();   // vaccins et vermifuges
 }
 const addMonths = (s, m) => { const d = parse(s), day = d.getDate(); const x = new Date(d.getFullYear(), d.getMonth() + m, 1);
   x.setDate(Math.min(day, new Date(x.getFullYear(), x.getMonth() + 1, 0).getDate())); return iso(x); };
