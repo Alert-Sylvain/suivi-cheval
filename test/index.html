@@ -287,6 +287,13 @@ nav button.rec span::after{content:"";display:inline-block;width:8px;height:8px;
 .ref th{font-size:.76rem;color:var(--muted)}
 .ref p{font-size:.84rem;margin:6px 0 12px}
 @media (max-width:380px){.seasons{grid-template-columns:1fr}.subseg button{font-size:.72rem;padding:9px 2px}}
+
+/* Deux séances dans la journée */
+.day .s2{display:grid;gap:8px;border-top:1px dashed var(--line);padding-top:10px;margin-top:2px}
+.day .s2 .s2lab{font-size:.8rem;font-weight:700;color:var(--accent)}
+.day .check.small{font-size:.86rem;padding:0;color:var(--muted)}
+.day .check.small input{width:18px;height:18px}
+.day .swatch.two{background:linear-gradient(var(--c) 0 50%, var(--c2) 50% 100%)}
 </style>
 </head>
 <body>
@@ -1048,76 +1055,126 @@ document.querySelectorAll("nav button").forEach(b => b.addEventListener("click",
 /* ---------- Semaine ---------- */
 let weekStart = monday(new Date());
 const riderName = id => ((cur.riders || []).find(r => r.id === id) || {}).name || "";
-function setDay(k, field, value){
+// Une journée = { activity, riderId, note, s2? } ; s2 = 2e séance du jour, même structure
+function setDay(k, field, value, second){
   const d = Object.assign({}, hd.days[k]);
-  if (value) d[field] = value; else delete d[field];
+  if (second){
+    const s2 = Object.assign({}, d.s2);
+    if (value) s2[field] = value; else delete s2[field];
+    d.s2 = s2;
+  } else { if (value) d[field] = value; else delete d[field]; }
   if (Object.keys(d).length) hd.days[k] = d; else delete hd.days[k];
 }
+const sessionsOf = day => [day, day.s2].filter(x => x && x.activity);
 let noteTimer;
 function autoGrow(t){ t.style.height = "auto"; t.style.height = t.scrollHeight + 2 + "px"; }
+// Champs d’une séance : activité, cavalier(e), note
+function sessionFields(k, data, second, longDate, multi){
+  const frag = { act:null, rest:[] };
+  const lbl = second ? " (2e séance)" : "";
+  const sel = document.createElement("select");
+  sel.setAttribute("aria-label", "Activité du " + longDate + lbl);
+  sel.innerHTML = `<option value="">Activité…</option>` + ACTIVITIES.map(([a]) => `<option${a === data.activity ? " selected" : ""}>${a}</option>`).join("");
+  sel.addEventListener("change", () => { setDay(k, "activity", sel.value, second); save(); renderWeek(); });
+  frag.act = sel;
+  if (multi){
+    const rs = document.createElement("select"); rs.className = "rider";
+    rs.setAttribute("aria-label", "Cavalier(e) du " + longDate + lbl);
+    rs.innerHTML = `<option value="">Cavalier(e)…</option>` +
+      cur.riders.map(r => `<option value="${r.id}"${r.id === data.riderId ? " selected" : ""}>${esc(r.name)}</option>`).join("");
+    rs.addEventListener("change", () => { setDay(k, "riderId", rs.value, second); save(); renderWeek(); });
+    frag.rest.push(rs);
+  }
+  const note = document.createElement("textarea");
+  note.rows = 1; note.maxLength = 1000; note.value = data.note || "";
+  note.placeholder = second ? "Note de la 2e séance (facultatif)" : "Note du jour (facultatif)";
+  note.setAttribute("aria-label", "Note du " + longDate + lbl);
+  note.addEventListener("input", () => {
+    autoGrow(note); setDay(k, "note", note.value.trim() ? note.value : "", second);
+    clearTimeout(noteTimer); noteTimer = setTimeout(save, 400);
+  });
+  note.addEventListener("blur", () => { clearTimeout(noteTimer); save(); });
+  requestAnimationFrame(() => autoGrow(note));
+  frag.rest.push(note);
+  return frag;
+}
 function renderWeek(){
   const end = addDays(weekStart, 6);
   const multi = !!(cur.multi && cur.riders && cur.riders.length);
   $("#weekLabel").textContent =
     `${weekStart.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})} – ${end.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})}`;
   const list = $("#days"); list.innerHTML = "";
-  const counts = {}, byRider = {}; const today = todayISO();
+  const counts = {}, byRider = {}, today = todayISO();
+  let workDays = 0, restDays = 0, doubleDays = 0;
   for (let i = 0; i < 7; i++){
-    const d = addDays(weekStart, i), k = iso(d), day = hd.days[k] || {}, val = day.activity || "";
-    if (val) counts[val] = (counts[val] || 0) + 1;
-    if (multi && day.riderId && riderName(day.riderId) && val !== "Repos") byRider[day.riderId] = (byRider[day.riderId] || 0) + 1;
+    const d = addDays(weekStart, i), k = iso(d), day = hd.days[k] || {};
+    const sess = sessionsOf(day);
+    sess.forEach(x => {
+      counts[x.activity] = (counts[x.activity] || 0) + 1;
+      if (multi && x.riderId && riderName(x.riderId) && x.activity !== "Repos") byRider[x.riderId] = (byRider[x.riderId] || 0) + 1;
+    });
+    if (sess.some(x => x.activity !== "Repos")) workDays++;
+    else if (sess.length) restDays++;
+    if (sess.filter(x => x.activity !== "Repos").length > 1) doubleDays++;
     const longDate = d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+    const c1 = day.activity ? actColor(day.activity) : "transparent";
+    const hasS2 = !!day.s2, c2 = hasS2 && day.s2.activity ? actColor(day.s2.activity) : "transparent";
     const row = document.createElement("div");
     row.className = "day" + (k === today ? " today" : "");
-    row.innerHTML = `<span class="swatch" style="--c:${val ? actColor(val) : "transparent"}"></span>
+    row.innerHTML = `<span class="swatch${hasS2 ? " two" : ""}" style="--c:${c1};--c2:${c2}"></span>
       <div class="dbody"><div class="dtop"><div class="dname"><strong>${cap(d.toLocaleDateString("fr-FR",{weekday:"long"}))}</strong>
       <span>${d.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</span></div></div></div>`;
     const body = row.querySelector(".dbody");
-    const sel = document.createElement("select");
-    sel.setAttribute("aria-label", "Activité du " + longDate);
-    sel.innerHTML = `<option value="">Activité…</option>` + ACTIVITIES.map(([a]) => `<option${a === val ? " selected" : ""}>${a}</option>`).join("");
-    sel.addEventListener("change", () => { setDay(k, "activity", sel.value); save(); renderWeek(); });
-    row.querySelector(".dtop").append(sel);
-    if (multi){
-      const rs = document.createElement("select"); rs.className = "rider";
-      rs.setAttribute("aria-label", "Cavalier(e) du " + longDate);
-      rs.innerHTML = `<option value="">Cavalier(e)…</option>` +
-        cur.riders.map(r => `<option value="${r.id}"${r.id === day.riderId ? " selected" : ""}>${esc(r.name)}</option>`).join("");
-      rs.addEventListener("change", () => { setDay(k, "riderId", rs.value); save(); renderWeek(); });
-      body.append(rs);
-    }
-    const note = document.createElement("textarea");
-    note.rows = 1; note.maxLength = 1000; note.value = day.note || "";
-    note.placeholder = "Note du jour (facultatif)";
-    note.setAttribute("aria-label", "Note du " + longDate);
-    note.addEventListener("input", () => {
-      autoGrow(note); setDay(k, "note", note.value.trim() ? note.value : "");
-      clearTimeout(noteTimer); noteTimer = setTimeout(save, 400);
+    const f1 = sessionFields(k, day, false, longDate, multi);
+    row.querySelector(".dtop").append(f1.act);
+    f1.rest.forEach(el => body.append(el));
+    // Case « 2e séance »
+    const chk = document.createElement("label"); chk.className = "check small";
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = hasS2;
+    chk.append(cb, document.createTextNode(" Ajouter une 2e séance ce jour-là"));
+    cb.addEventListener("change", async () => {
+      if (cb.checked){ setDay(k, "s2", {}); }
+      else {
+        const s2 = (hd.days[k] || {}).s2 || {};
+        if ((s2.activity || s2.riderId || (s2.note || "").trim()) &&
+            !(await askConfirm("Retirer la 2e séance de ce jour et ce qui y est saisi ?", "Retirer"))){ cb.checked = true; return; }
+        const dd = Object.assign({}, hd.days[k]); delete dd.s2;
+        if (Object.keys(dd).length) hd.days[k] = dd; else delete hd.days[k];
+      }
+      await save(); renderWeek();
     });
-    note.addEventListener("blur", () => { clearTimeout(noteTimer); save(); });
-    body.append(note);
+    body.append(chk);
+    if (hasS2){
+      const box = document.createElement("div"); box.className = "s2";
+      const lab = document.createElement("div"); lab.className = "s2lab"; lab.textContent = "2e séance";
+      const f2 = sessionFields(k, day.s2, true, longDate, multi);
+      box.append(lab, f2.act, ...f2.rest);
+      body.append(box);
+    }
     list.append(row);
-    requestAnimationFrame(() => autoGrow(note));
   }
   const entries = Object.entries(counts);
-  const worked = entries.filter(([a]) => a !== "Repos").reduce((s, [,n]) => s + n, 0);
   const riderChips = multi && Object.keys(byRider).length
-    ? `<p class="muted" style="margin:12px 0 6px;font-size:.9rem">Par cavalier(e)</p><div class="chips">${cur.riders.filter(r => byRider[r.id]).map(r => `<span class="chip">${esc(r.name)} · ${plural(byRider[r.id], "jour", "jours")}</span>`).join("")}</div>`
+    ? `<p class="muted" style="margin:12px 0 6px;font-size:.9rem">Par cavalier(e)</p><div class="chips">${cur.riders.filter(r => byRider[r.id]).map(r => `<span class="chip">${esc(r.name)} · ${plural(byRider[r.id], "séance", "séances")}</span>`).join("")}</div>`
     : "";
+  // Repos en dernier dans la liste des pastilles
+  const ordered = entries.sort((a, b) => (a[0] === "Repos") - (b[0] === "Repos"));
   $("#weekSummary").innerHTML = entries.length
-    ? `<p><strong>${plural(worked, "jour de travail", "jours de travail")}</strong> cette semaine${counts.Repos ? `, ${plural(counts.Repos, "jour", "jours")} de repos` : ""}.</p>
-       <div class="chips">${entries.filter(([a]) => a !== "Repos").map(([a,n]) => `<span class="chip"><i style="background:${actColor(a)}"></i>${a} × ${n}</span>`).join("")}</div>${riderChips}`
+    ? `<p><strong>${plural(workDays, "jour de travail", "jours de travail")}</strong>${doubleDays ? ` (dont ${doubleDays} à 2 séances)` : ""} cette semaine${restDays ? `, ${plural(restDays, "jour", "jours")} de repos` : ""}.</p>
+       <div class="chips">${ordered.map(([a,n]) => `<span class="chip"><i style="background:${actColor(a)}"></i>${a} × ${n}</span>`).join("")}</div>${riderChips}`
     : `<p class="muted" style="margin:0">Aucune activité saisie pour cette semaine. Choisissez une activité pour chaque jour.</p>`;
 }
 $("#prevWeek").onclick = () => { weekStart = addDays(weekStart, -7); renderWeek(); };
 $("#nextWeek").onclick = () => { weekStart = addDays(weekStart, 7); renderWeek(); };
 $("#thisWeek").onclick = () => { weekStart = monday(new Date()); renderWeek(); };
 async function copyMarks(from, to){
-  return new Set(Object.keys(hd.days).filter(k => k >= from && k <= to && (hd.days[k].activity || hd.days[k].riderId || hd.days[k].note)));
+  const filled = x => x && (x.activity || x.riderId || x.note);
+  return new Set(Object.keys(hd.days).filter(k => k >= from && k <= to && (filled(hd.days[k]) || filled(hd.days[k].s2))));
 }
 function copySourceDays(){
   const out = {};
-  Object.entries(hd.days).forEach(([k, d]) => { out[k] = { activity: d.activity, rider_id: d.riderId, note: d.note }; });
+  Object.entries(hd.days).forEach(([k, d]) => { out[k] = { activity: d.activity, rider_id: d.riderId, note: d.note,
+    s2: d.s2 ? { activity: d.s2.activity || null, rider_id: d.s2.riderId || null, note: d.s2.note || null } : null }; });
   return out;
 }
 async function pasteWeek(src, dst, withNotes){
@@ -1130,6 +1187,14 @@ async function pasteWeek(src, dst, withNotes){
     if (d.rider_id) nd.riderId = d.rider_id;
     const note = withNotes && d.note ? d.note : ex.note;
     if (note) nd.note = note;
+    if (d.s2){
+      const s2 = {}, ex2 = ex.s2 || {};
+      if (d.s2.activity) s2.activity = d.s2.activity;
+      if (d.s2.rider_id) s2.riderId = d.s2.rider_id;
+      const n2 = withNotes && d.s2.note ? d.s2.note : ex2.note;
+      if (n2) s2.note = n2;
+      nd.s2 = s2;
+    }
     hd.days[k] = nd; n++;
   }
   await save();
@@ -1143,12 +1208,13 @@ $("#copyWeek").onclick = () => {
   let count = 0;
   for (let i = 0; i < 7; i++){
     const d = src[iso(addDays(weekStart, i))];
-    if (d && (d.activity || d.rider_id || (d.note || "").trim())){ days[i] = { activity: d.activity || null, rider_id: d.rider_id || null, note: d.note || null }; if (d.activity) count++; }
+    const f = x => x && (x.activity || x.rider_id || (x.note || "").trim());
+    if (d && (f(d) || f(d.s2))){ days[i] = { activity: d.activity || null, rider_id: d.rider_id || null, note: d.note || null, s2: d.s2 || null }; if (d.activity) count++; }
   }
   if (!days.some(Boolean)){ toast("Cette semaine est vide : rien à copier"); return; }
   copyBuffer = { start: weekStart, days };
   copyTarget = null;
-  const acts = days.filter(d => d && d.activity).map(d => d.activity);
+  const acts = days.filter(Boolean).flatMap(d => [d.activity, d.s2 && d.s2.activity]).filter(Boolean);
   $("#copyInfo").innerHTML = `<strong>Semaine copiée : ${esc(shortRange(weekStart))}</strong><br>` +
     (acts.length ? esc(acts.join(" · ")) : "Notes et cavalier(e)s uniquement");
   $("#copyNotes").checked = false;
@@ -1203,7 +1269,7 @@ $("#copyPaste").onclick = async () => {
   const btn = $("#copyPaste"); btn.disabled = true; btn.textContent = "Collage…";
   try {
     const marks = await copyMarks(iso(copyTarget), iso(addDays(copyTarget, 6)));
-    const overwrite = copyBuffer.days.some((d, i) => d && marks.has(iso(addDays(copyTarget, i))));
+    const overwrite = copyBuffer.days.some((d, i) => d && marks.has(iso(addDays(copyTarget, i))));   // jours déjà remplis
     if (overwrite && !(await askConfirm(`Certains jours de la semaine du ${shortRange(copyTarget)} sont déjà remplis : leurs activités seront remplacées. Continuer ?`, "Remplacer"))) return;
     const n = await pasteWeek(copyBuffer.start, copyTarget, $("#copyNotes").checked);
     closeSheet($("#copySheet"));
