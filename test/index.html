@@ -1131,7 +1131,7 @@ function renderWeek(){
     // Case « 2e séance »
     const chk = document.createElement("label"); chk.className = "check small";
     const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = hasS2;
-    chk.append(cb, document.createTextNode(" Ajouter une 2e séance ce jour-là"));
+    chk.append(cb, document.createTextNode(" Ajouter une 2e séance"));
     cb.addEventListener("change", async () => {
       if (cb.checked){ setDay(k, "s2", {}); }
       else {

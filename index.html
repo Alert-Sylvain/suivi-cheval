@@ -78,7 +78,7 @@ h3{font-size:1rem;margin:22px 4px 8px;color:var(--muted);font-weight:600}
 .day .dname span{color:var(--muted);font-size:.85rem}
 .day.today{background:var(--accent-soft)}
 .day.today .dname strong::after{content:" · aujourd’hui";font-weight:400;color:var(--accent);font-size:.85rem}
-select,input[type=text],input[type=date],input[type=number],textarea{
+select,input[type=text],input[type=email],input[type=password],input[type=date],input[type=number],textarea{
   width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px}
 .summary p{margin:0 0 8px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -239,6 +239,18 @@ body.readonly .ro-hide{display:none !important}
 .cal-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin:12px 4px 0}
 .cal-legend i{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-1px;margin-right:5px}
 .copy-info{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.92rem;margin-bottom:12px}
+
+/* Afficher / masquer le mot de passe */
+.pw{position:relative;display:block}
+.pw input{padding-right:48px}
+.pw .eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:40px;height:40px;border:none;background:none;cursor:pointer;color:var(--muted);display:grid;place-items:center;border-radius:8px}
+.pw .eye svg{width:22px;height:22px}
+/* Deux séances dans la journée */
+.day .s2{display:grid;gap:8px;border-top:1px dashed var(--line);padding-top:10px;margin-top:2px}
+.day .s2 .s2lab{font-size:.8rem;font-weight:700;color:var(--accent)}
+.day .check.small{font-size:.86rem;padding:0;color:var(--muted)}
+.day .check.small input{width:18px;height:18px}
+.day .swatch.two{background:linear-gradient(var(--c) 0 50%, var(--c2) 50% 100%)}
 </style>
 </head>
 <body>
@@ -268,7 +280,7 @@ body.readonly .ro-hide{display:none !important}
 
   <form id="loginForm" class="panel" data-view="login">
     <label>Adresse e-mail <input type="email" id="loginEmail" required autocomplete="email"></label>
-    <label>Mot de passe <input type="password" id="loginPassword" required autocomplete="current-password"></label>
+    <label>Mot de passe <span class="pw"><input type="password" id="loginPassword" required autocomplete="current-password"><button type="button" class="eye" aria-label="Afficher le mot de passe" aria-pressed="false"></button></span></label>
     <button class="primary" type="button" data-submit>Se connecter</button>
     <button class="linkbtn" type="button" id="toForgot">Mot de passe oublié ?</button>
   </form>
@@ -276,7 +288,7 @@ body.readonly .ro-hide{display:none !important}
   <form id="signupForm" class="panel" data-view="signup" hidden>
     <label>Prénom et nom <input type="text" id="signupName" required maxlength="60" autocomplete="name"></label>
     <label>Adresse e-mail <input type="email" id="signupEmail" required autocomplete="email"></label>
-    <label>Mot de passe (8 caractères minimum) <input type="password" id="signupPassword" required minlength="8" autocomplete="new-password"></label>
+    <label>Mot de passe (8 caractères minimum) <span class="pw"><input type="password" id="signupPassword" required minlength="8" autocomplete="new-password"><button type="button" class="eye" aria-label="Afficher le mot de passe" aria-pressed="false"></button></span></label>
     <button class="primary" type="button" data-submit>Créer mon compte</button>
     <p class="muted" style="margin:0;font-size:.86rem">Si la structure vous a invité(e), utilisez l’adresse e-mail communiquée à l’administrateur.</p>
   </form>
@@ -290,7 +302,7 @@ body.readonly .ro-hide{display:none !important}
 
   <form id="recoveryForm" class="panel" data-view="recovery" hidden>
     <p style="margin:0"><strong>Choisissez votre nouveau mot de passe.</strong></p>
-    <label>Nouveau mot de passe (8 caractères minimum) <input type="password" id="recoveryPassword" required minlength="8" autocomplete="new-password"></label>
+    <label>Nouveau mot de passe (8 caractères minimum) <span class="pw"><input type="password" id="recoveryPassword" required minlength="8" autocomplete="new-password"><button type="button" class="eye" aria-label="Afficher le mot de passe" aria-pressed="false"></button></span></label>
     <button class="primary" type="button" data-submit>Enregistrer</button>
   </form>
 
@@ -493,7 +505,7 @@ body.readonly .ro-hide{display:none !important}
       </form>
       <h3>Mot de passe</h3>
       <form id="passwordForm">
-        <label>Nouveau mot de passe (8 caractères minimum) <input type="password" id="newPassword" required minlength="8" autocomplete="new-password"></label>
+        <label>Nouveau mot de passe (8 caractères minimum) <span class="pw"><input type="password" id="newPassword" required minlength="8" autocomplete="new-password"><button type="button" class="eye" aria-label="Afficher le mot de passe" aria-pressed="false"></button></span></label>
         <button class="ghost" type="button" data-submit>Changer le mot de passe</button>
       </form>
       <div id="importBlock" hidden>
@@ -772,6 +784,25 @@ function showLoading(msg = "Chargement…", retry = null){
   showScreen("loading");
 }
 
+
+/* ---------- Afficher / masquer le mot de passe ---------- */
+const EYE_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_SHUT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7c1.9 0 3.5-.6 4.9-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+document.querySelectorAll(".pw").forEach(w => {
+  const input = w.querySelector("input"), btn = w.querySelector(".eye");
+  const paint = () => {
+    const shown = input.type === "text";
+    btn.innerHTML = shown ? EYE_SHUT : EYE_OPEN;
+    btn.setAttribute("aria-label", shown ? "Masquer le mot de passe" : "Afficher le mot de passe");
+    btn.setAttribute("aria-pressed", String(shown));
+  };
+  btn.addEventListener("mousedown", e => e.preventDefault());   // garde le curseur dans le champ
+  btn.addEventListener("click", () => { input.type = input.type === "password" ? "text" : "password"; paint(); });
+  paint();
+});
+// Remasquer après envoi ou déconnexion
+function hidePasswords(){ document.querySelectorAll(".pw input").forEach(i => { i.type = "password"; }); document.querySelectorAll(".pw .eye").forEach(b => { b.innerHTML = EYE_OPEN; b.setAttribute("aria-pressed","false"); b.setAttribute("aria-label","Afficher le mot de passe"); }); }
+
 /* ---------- Connexion ---------- */
 function showAuthView(v){
   showScreen("auth");
@@ -812,7 +843,7 @@ document.querySelectorAll("[data-logout]").forEach(b => b.onclick = async () => 
   document.querySelectorAll(".overlay").forEach(o => o.hidden = true);
   await sb.auth.signOut();
 });
-function resetState(){ user = me = org = cur = null; members = []; myAccess = []; horses = []; signedCache.clear(); }
+function resetState(){ hidePasswords(); user = me = org = cur = null; members = []; myAccess = []; horses = []; signedCache.clear(); }
 
 async function loadMe(){
   const rows = await q(sb.from("members").select("*").eq("user_id", user.id).order("created_at").limit(1));
@@ -1073,18 +1104,32 @@ $("#deleteHorse").onclick = async () => {
 
 /* ---------- Semaine ---------- */
 let weekStart = monday(new Date()), weekDays = {}, noteTimer;
+let s2Supported = null;   // colonne « s2 » (2e séance) présente dans la base ?
 const riderName = id => ((cur.riders || []).find(r => r.id === id) || {}).name || "";
 function autoGrow(t){ t.style.height = "auto"; t.style.height = t.scrollHeight + 2 + "px"; }
-async function saveDay(k, patch){
+const filledS = x => !!(x && (x.activity || x.rider_id || (x.note || "").trim()));
+async function checkS2(){
+  if (s2Supported !== null) return s2Supported;
+  const { error } = await sb.from("days").select("s2").limit(1);
+  s2Supported = !error;
+  return s2Supported;
+}
+// patch : champs de la 1re séance ; second = true : champs de la 2e séance ; s2 = null : retirer la 2e séance
+async function saveDay(k, patch, second){
   const prev = weekDays[k] || {};
-  const d = { activity: prev.activity || null, rider_id: prev.rider_id || null, note: prev.note || null, ...patch };
-  weekDays[k] = { ...d, horse_id: cur.id, date: k, updated_by: user.id, updated_at: new Date().toISOString() };
-  if (!d.activity && !d.rider_id && !(d.note || "").trim()){
+  let d = { activity: prev.activity || null, rider_id: prev.rider_id || null, note: prev.note || null, s2: prev.s2 || null };
+  if (second) d.s2 = { ...(d.s2 || {}), ...patch };
+  else d = { ...d, ...patch };
+  const now = new Date().toISOString();
+  weekDays[k] = { ...d, horse_id: cur.id, date: k, updated_by: user.id, updated_at: now };
+  if (!filledS(d) && !d.s2){
     delete weekDays[k];
     await q(sb.from("days").delete().eq("horse_id", cur.id).eq("date", k));
   } else {
-    await q(sb.from("days").upsert({ horse_id: cur.id, date: k, activity: d.activity, rider_id: d.rider_id,
-      note: (d.note || "").trim() ? d.note : null, updated_by: user.id, updated_at: new Date().toISOString() }));
+    const row = { horse_id: cur.id, date: k, activity: d.activity, rider_id: d.rider_id,
+      note: (d.note || "").trim() ? d.note : null, updated_by: user.id, updated_at: now };
+    if (s2Supported) row.s2 = d.s2;
+    await q(sb.from("days").upsert(row));
   }
 }
 async function renderWeek(){
@@ -1092,50 +1137,95 @@ async function renderWeek(){
   $("#weekLabel").textContent =
     `${weekStart.toLocaleDateString("fr-FR",{day:"numeric",month:"short"})} – ${addDays(weekStart, 6).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})}`;
   try {
+    await checkS2();
     const rows = await q(sb.from("days").select("*").eq("horse_id", horse.id).gte("date", from).lte("date", to));
     if (cur !== horse || iso(weekStart) !== from) return;
-    weekDays = {}; rows.forEach(r => { if (r.activity) r.activity = normAct(r.activity); weekDays[r.date] = r; });
+    weekDays = {}; rows.forEach(r => {
+      if (r.activity) r.activity = normAct(r.activity);
+      if (r.s2 && r.s2.activity) r.s2.activity = normAct(r.s2.activity);
+      weekDays[r.date] = r;
+    });
   } catch(e){ return; }
   drawWeek();
+}
+// Champs d’une séance : activité, cavalier(e), note
+function sessionFields(k, data, second, longDate, multi, ro){
+  const out = { act:null, rest:[] }, lbl = second ? " (2e séance)" : "";
+  const sel = document.createElement("select"); sel.disabled = ro;
+  sel.setAttribute("aria-label", "Activité du " + longDate + lbl);
+  sel.innerHTML = `<option value="">Activité…</option>` + ACTIVITIES.map(([a]) => `<option${a === data.activity ? " selected" : ""}>${a}</option>`).join("");
+  sel.addEventListener("change", async () => { try { await saveDay(k, { activity: sel.value || null }, second); } catch(e){} drawWeek(); });
+  out.act = sel;
+  if (multi){
+    const rs = document.createElement("select"); rs.className = "rider"; rs.disabled = ro;
+    rs.setAttribute("aria-label", "Cavalier(e) du " + longDate + lbl);
+    rs.innerHTML = `<option value="">Cavalier(e)…</option>` +
+      cur.riders.map(r => `<option value="${r.id}"${r.id === data.rider_id ? " selected" : ""}>${esc(r.name)}</option>`).join("");
+    rs.addEventListener("change", async () => { try { await saveDay(k, { rider_id: rs.value || null }, second); } catch(e){} drawWeek(); });
+    out.rest.push(rs);
+  }
+  if (!ro || data.note){
+    const note = document.createElement("textarea");
+    note.rows = 1; note.maxLength = 1000; note.value = data.note || ""; note.readOnly = ro;
+    note.placeholder = second ? "Note de la 2e séance (facultatif)" : "Note du jour (facultatif)";
+    note.setAttribute("aria-label", "Note du " + longDate + lbl);
+    const current = () => { const w = weekDays[k] || {}; return ((second ? (w.s2 || {}) : w).note) || ""; };
+    const commit = () => { clearTimeout(noteTimer); if ((note.value || "") !== current()) saveDay(k, { note: note.value }, second).catch(() => {}); };
+    note.addEventListener("input", () => { autoGrow(note); clearTimeout(noteTimer); noteTimer = setTimeout(commit, 800); });
+    note.addEventListener("blur", commit);
+    requestAnimationFrame(() => autoGrow(note));
+    out.rest.push(note);
+  }
+  return out;
 }
 function drawWeek(){
   const multi = !!(cur.multi && cur.riders.length), ro = level < 2;
   const list = $("#days"); list.innerHTML = "";
   const counts = {}, byRider = {}, today = todayISO();
+  let workDays = 0, restDays = 0, doubleDays = 0;
   for (let i = 0; i < 7; i++){
-    const d = addDays(weekStart, i), k = iso(d), day = weekDays[k] || {}, val = day.activity || "";
-    if (val) counts[val] = (counts[val] || 0) + 1;
-    if (multi && day.rider_id && riderName(day.rider_id) && val !== "Repos") byRider[day.rider_id] = (byRider[day.rider_id] || 0) + 1;
+    const d = addDays(weekStart, i), k = iso(d), day = weekDays[k] || {};
+    const sess = [day, day.s2].filter(x => x && x.activity);
+    sess.forEach(x => {
+      counts[x.activity] = (counts[x.activity] || 0) + 1;
+      if (multi && x.rider_id && riderName(x.rider_id) && x.activity !== "Repos") byRider[x.rider_id] = (byRider[x.rider_id] || 0) + 1;
+    });
+    if (sess.some(x => x.activity !== "Repos")) workDays++; else if (sess.length) restDays++;
+    if (sess.filter(x => x.activity !== "Repos").length > 1) doubleDays++;
     const longDate = d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+    const hasS2 = !!day.s2;
+    const c1 = day.activity ? actColor(day.activity) : "transparent", c2 = hasS2 && day.s2.activity ? actColor(day.s2.activity) : "transparent";
     const row = document.createElement("div");
     row.className = "day" + (k === today ? " today" : "");
-    row.innerHTML = `<span class="swatch" style="--c:${val ? actColor(val) : "transparent"}"></span>
+    row.innerHTML = `<span class="swatch${hasS2 ? " two" : ""}" style="--c:${c1};--c2:${c2}"></span>
       <div class="dbody"><div class="dtop"><div class="dname"><strong>${cap(d.toLocaleDateString("fr-FR",{weekday:"long"}))}</strong>
       <span>${d.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}</span></div></div></div>`;
     const body = row.querySelector(".dbody");
-    const sel = document.createElement("select"); sel.disabled = ro;
-    sel.setAttribute("aria-label", "Activité du " + longDate);
-    sel.innerHTML = `<option value="">Activité…</option>` + ACTIVITIES.map(([a]) => `<option${a === val ? " selected" : ""}>${a}</option>`).join("");
-    sel.addEventListener("change", async () => { try { await saveDay(k, { activity: sel.value || null }); } catch(e){} drawWeek(); });
-    row.querySelector(".dtop").append(sel);
-    if (multi){
-      const rs = document.createElement("select"); rs.className = "rider"; rs.disabled = ro;
-      rs.setAttribute("aria-label", "Cavalier(e) du " + longDate);
-      rs.innerHTML = `<option value="">Cavalier(e)…</option>` +
-        cur.riders.map(r => `<option value="${r.id}"${r.id === day.rider_id ? " selected" : ""}>${esc(r.name)}</option>`).join("");
-      rs.addEventListener("change", async () => { try { await saveDay(k, { rider_id: rs.value || null }); } catch(e){} drawWeek(); });
-      body.append(rs);
+    const f1 = sessionFields(k, day, false, longDate, multi, ro);
+    row.querySelector(".dtop").append(f1.act);
+    f1.rest.forEach(el => body.append(el));
+    if (s2Supported && !ro){
+      const chk = document.createElement("label"); chk.className = "check small";
+      const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = hasS2;
+      chk.append(cb, document.createTextNode(" Ajouter une 2e séance"));
+      cb.addEventListener("change", async () => {
+        try {
+          if (cb.checked) await saveDay(k, { s2: {} });
+          else {
+            if (filledS((weekDays[k] || {}).s2) && !(await askConfirm("Retirer la 2e séance de ce jour et ce qui y est saisi ?", "Retirer"))){ cb.checked = true; return; }
+            await saveDay(k, { s2: null });
+          }
+        } catch(e){}
+        drawWeek();
+      });
+      body.append(chk);
     }
-    if (!ro || day.note){
-      const note = document.createElement("textarea");
-      note.rows = 1; note.maxLength = 1000; note.value = day.note || ""; note.readOnly = ro;
-      note.placeholder = "Note du jour (facultatif)";
-      note.setAttribute("aria-label", "Note du " + longDate);
-      const commit = () => { clearTimeout(noteTimer); if ((note.value || "") !== ((weekDays[k] || {}).note || "")) saveDay(k, { note: note.value }).catch(() => {}); };
-      note.addEventListener("input", () => { autoGrow(note); clearTimeout(noteTimer); noteTimer = setTimeout(commit, 800); });
-      note.addEventListener("blur", commit);
-      body.append(note);
-      requestAnimationFrame(() => autoGrow(note));
+    if (hasS2 && (!ro || filledS(day.s2))){
+      const box = document.createElement("div"); box.className = "s2";
+      const lab = document.createElement("div"); lab.className = "s2lab"; lab.textContent = "2e séance";
+      const f2 = sessionFields(k, day.s2, true, longDate, multi, ro);
+      box.append(lab, f2.act, ...f2.rest);
+      body.append(box);
     }
     if (day.updated_by){
       const m = document.createElement("div"); m.className = "dmeta";
@@ -1144,13 +1234,12 @@ function drawWeek(){
     }
     list.append(row);
   }
-  const entries = Object.entries(counts);
-  const worked = entries.filter(([a]) => a !== "Repos").reduce((s, [,n]) => s + n, 0);
+  const entries = Object.entries(counts).sort((a, b) => (a[0] === "Repos") - (b[0] === "Repos"));
   const riderChips = multi && Object.keys(byRider).length
-    ? `<p class="muted" style="margin:12px 0 6px;font-size:.9rem">Par cavalier(e)</p><div class="chips">${cur.riders.filter(r => byRider[r.id]).map(r => `<span class="chip">${esc(r.name)} · ${plural(byRider[r.id], "jour", "jours")}</span>`).join("")}</div>` : "";
+    ? `<p class="muted" style="margin:12px 0 6px;font-size:.9rem">Par cavalier(e)</p><div class="chips">${cur.riders.filter(r => byRider[r.id]).map(r => `<span class="chip">${esc(r.name)} · ${plural(byRider[r.id], "séance", "séances")}</span>`).join("")}</div>` : "";
   $("#weekSummary").innerHTML = entries.length
-    ? `<p><strong>${plural(worked, "jour de travail", "jours de travail")}</strong> cette semaine${counts.Repos ? `, ${plural(counts.Repos, "jour", "jours")} de repos` : ""}.</p>
-       <div class="chips">${entries.filter(([a]) => a !== "Repos").map(([a,n]) => `<span class="chip"><i style="background:${actColor(a)}"></i>${a} × ${n}</span>`).join("")}</div>${riderChips}`
+    ? `<p><strong>${plural(workDays, "jour de travail", "jours de travail")}</strong>${doubleDays ? ` (dont ${doubleDays} à 2 séances)` : ""} cette semaine${restDays ? `, ${plural(restDays, "jour", "jours")} de repos` : ""}.</p>
+       <div class="chips">${entries.map(([a,n]) => `<span class="chip"><i style="background:${actColor(a)}"></i>${a} × ${n}</span>`).join("")}</div>${riderChips}`
     : `<p class="muted" style="margin:0">Aucune activité saisie pour cette semaine.</p>`;
 }
 $("#prevWeek").onclick = () => { weekStart = addDays(weekStart, -7); renderWeek(); };
@@ -1169,8 +1258,15 @@ async function pasteWeek(src, dst, withNotes){
     const d = copyBuffer.days[i]; if (!d) continue;
     const k = iso(addDays(dst, i)), ex = existing[k] || {};
     const note = withNotes && d.note ? d.note : (ex.note || null);
-    rows.push({ horse_id: cur.id, date: k, activity: d.activity || null, rider_id: d.rider_id || null, note,
-      updated_by: user.id, updated_at: new Date().toISOString() });
+    const row = { horse_id: cur.id, date: k, activity: d.activity || null, rider_id: d.rider_id || null, note,
+      updated_by: user.id, updated_at: new Date().toISOString() };
+    if (s2Supported){
+      if (d.s2){
+        const ex2 = ex.s2 || {};
+        row.s2 = { activity: d.s2.activity || null, rider_id: d.s2.rider_id || null, note: withNotes && d.s2.note ? d.s2.note : (ex2.note || null) };
+      } else row.s2 = null;
+    }
+    rows.push(row);
   }
   if (rows.length) await q(sb.from("days").upsert(rows));
   return rows.length;
@@ -1183,12 +1279,12 @@ $("#copyWeek").onclick = () => {
   let count = 0;
   for (let i = 0; i < 7; i++){
     const d = src[iso(addDays(weekStart, i))];
-    if (d && (d.activity || d.rider_id || (d.note || "").trim())){ days[i] = { activity: d.activity || null, rider_id: d.rider_id || null, note: d.note || null }; if (d.activity) count++; }
+    if (d && (filledS(d) || filledS(d.s2))){ days[i] = { activity: d.activity || null, rider_id: d.rider_id || null, note: d.note || null, s2: d.s2 || null }; if (d.activity) count++; }
   }
   if (!days.some(Boolean)){ toast("Cette semaine est vide : rien à copier"); return; }
   copyBuffer = { start: weekStart, days };
   copyTarget = null;
-  const acts = days.filter(d => d && d.activity).map(d => d.activity);
+  const acts = days.filter(Boolean).flatMap(d => [d.activity, d.s2 && d.s2.activity]).filter(Boolean);
   $("#copyInfo").innerHTML = `<strong>Semaine copiée : ${esc(shortRange(weekStart))}</strong><br>` +
     (acts.length ? esc(acts.join(" · ")) : "Notes et cavalier(e)s uniquement");
   $("#copyNotes").checked = false;

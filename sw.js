@@ -1,5 +1,5 @@
 // Permet à Suivi cheval de s’ouvrir sans connexion une fois installé.
-const CACHE = "suivi-cheval-en-ligne-v4";
+const CACHE = "suivi-cheval-en-ligne-v5";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
