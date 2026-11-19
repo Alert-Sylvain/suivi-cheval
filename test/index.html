@@ -247,7 +247,7 @@ nav button.rec span::after{content:"";display:inline-block;width:8px;height:8px;
 #unlockZone.holding::before{transform:scaleX(1);transition:transform 1.5s linear}
 
 /* ----- Suivi (sous-onglets) ----- */
-.subseg{display:flex;gap:2px;background:var(--accent-soft);border-radius:12px;padding:4px;margin:8px 0 4px;position:sticky;top:0;z-index:5}
+.subseg{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;background:var(--accent-soft);border-radius:12px;padding:4px;margin:8px 0 4px;position:sticky;top:0;z-index:5}
 .subseg button{flex:1 1 auto;border:none;background:none;padding:9px 4px;border-radius:9px;cursor:pointer;font-weight:600;color:var(--muted);font-size:.78rem;white-space:nowrap}
 .subseg button[aria-selected=true]{background:var(--surface);color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .fchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
@@ -294,6 +294,16 @@ nav button.rec span::after{content:"";display:inline-block;width:8px;height:8px;
 .day .check.small{font-size:.86rem;padding:0;color:var(--muted)}
 .day .check.small input{width:18px;height:18px}
 .day .swatch.two{background:linear-gradient(var(--c) 0 50%, var(--c2) 50% 100%)}
+.subseg::-webkit-scrollbar{display:none}
+/* Récapitulatif des échéances */
+.recap{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;width:100%;font:inherit;color:var(--ink)}
+.recap.late{border-left-color:var(--alert)}.recap.soon{border-left-color:var(--warn)}.recap.none{border-left-color:var(--line)}
+.recap .rk{flex:none;width:40px;height:40px;border-radius:10px;background:var(--accent-soft);display:grid;place-items:center;font-size:1.2rem}
+.recap .rg{flex:1;min-width:0}
+.recap .rt{font-weight:600}
+.recap .rs{font-size:.9rem;margin-top:1px}
+.recap.late .rs{color:var(--alert);font-weight:600}.recap.soon .rs{color:var(--warn);font-weight:600}
+.recap .rd{font-size:.8rem;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -394,13 +404,20 @@ nav button.rec span::after{content:"";display:inline-block;width:8px;height:8px;
     <!-- MARÉCHAL -->
     <section id="tab-farrier" hidden aria-label="Suivi">
       <div class="subseg" id="suiviSeg" role="tablist">
-        <button type="button" role="tab" data-sub="marechal" aria-selected="true">Maréchal</button>
+        <button type="button" role="tab" data-sub="recap" aria-selected="true">Récap</button>
+        <button type="button" role="tab" data-sub="marechal" aria-selected="false">Maréchal</button>
         <button type="button" role="tab" data-sub="osteo" aria-selected="false">Ostéo</button>
         <button type="button" role="tab" data-sub="dentiste" aria-selected="false">Dentiste</button>
         <button type="button" role="tab" data-sub="vaccins" aria-selected="false">Vaccins</button>
         <button type="button" role="tab" data-sub="vermifuges" aria-selected="false">Vermifuges</button>
       </div>
-      <div data-subpanel="marechal">
+      <div data-subpanel="recap">
+        <h2>Prochaines échéances</h2>
+        <div class="list" id="recapList"></div>
+        <h3>Dernières visites</h3>
+        <div class="list" id="recapVisits"></div>
+      </div>
+      <div data-subpanel="marechal" hidden>
       <h2>Prochaine ferrure</h2>
       <div id="farrierStatus"></div>
       <h2>Enregistrer une ferrure</h2>
@@ -917,7 +934,7 @@ function showHome(){
 async function enterHorse(id, push = true){
   cur = horses.find(h => h.id === id); if (!cur) return showHome();
   hd = normalizeHorseData(await kvGet("horse:" + id));
-  weekStart = monday(new Date()); docFilter = "Toutes"; suiviSub = "marechal";
+  weekStart = monday(new Date()); docFilter = "Toutes"; suiviSub = "recap";
   $("#shoeInterval").value = "";
   renderAppHeader();
   $("#home").hidden = true; $("#app").hidden = false; document.body.classList.add("in-app");
@@ -2059,12 +2076,13 @@ $("#techToggle").onchange = () => { $("#liveTech").hidden = !$("#techToggle").ch
 /* =====================================================================
    SUIVI : sous-onglets Maréchal, Ostéopathe, Dentiste, Protocole
    ===================================================================== */
-let suiviSub = "marechal";
+let suiviSub = "recap";
 document.querySelectorAll("#suiviSeg button").forEach(b => b.onclick = () => { suiviSub = b.dataset.sub; renderSuivi(); window.scrollTo(0, 0); });
 function renderSuivi(){
   document.querySelectorAll("#suiviSeg button").forEach(b => b.setAttribute("aria-selected", b.dataset.sub === suiviSub));
   document.querySelectorAll("[data-subpanel]").forEach(p => { p.hidden = p.dataset.subpanel !== suiviSub; });
-  if (suiviSub === "marechal") renderFarrier();
+  if (suiviSub === "recap") renderRecap();
+  else if (suiviSub === "marechal") renderFarrier();
   else if (suiviSub === "osteo" || suiviSub === "dentiste") renderPractitioner(suiviSub);
   else renderProtocol();   // vaccins et vermifuges
 }
@@ -2108,6 +2126,85 @@ function historyItem(title, meta, files, onDelete){
   const del = document.createElement("button"); del.className = "danger"; del.textContent = "Supprimer"; del.onclick = onDelete;
   it.append(grow, del);
   return it;
+}
+
+
+/* --- Récapitulatif des échéances --- */
+function goSub(sub){ suiviSub = sub; renderSuivi(); window.scrollTo(0, 0); }
+function seasonDue(){
+  // Prochain vermifuge : saison en cours non faite, sinon prochaine saison (l’hiver est facultatif)
+  const t = todayISO(), y = parse(t).getFullYear(), cur0 = seasonOf(t);
+  const order = ["hiver","printemps","ete","automne"];
+  const doneIn = (year, key) => hd.protocol.vermifuges.some(w => parse(w.date).getFullYear() === year && seasonOf(w.date) === key);
+  const end = (year, se) => iso(new Date(year, se.m[se.m.length - 1], 0));
+  const start = (year, se) => iso(new Date(year, se.m[0] - 1, 1));
+  let i = order.indexOf(cur0), year = y;
+  for (let n = 0; n < 5; n++){
+    const se = SEASONS.find(x => x.key === order[i]);
+    if (!se.optional && !doneIn(year, se.key)) return { se, from: start(year, se), due: end(year, se), current: n === 0 };
+    i++; if (i > 3){ i = 0; year++; }
+  }
+  return null;
+}
+function renderRecap(){
+  const items = [], t = todayISO();
+  const push = (o) => items.push(o);
+  // Maréchal
+  const last = latestShoe();
+  if (last){
+    const due = nextShoe(last), left = daysBetween(t, due);
+    push({ icon:"🔨", title:"Ferrure", sub:"marechal", due,
+      cls: left < 0 ? "late" : left <= 7 ? "soon" : "ok",
+      status: left < 0 ? `En retard de ${plural(-left, "jour", "jours")}` : left === 0 ? "Aujourd’hui" : `Dans ${plural(left, "jour", "jours")}`,
+      detail: `Prévue le ${fmt(due)} · dernière le ${fmt(last.date, {day:"numeric", month:"short"})}` });
+  } else push({ icon:"🔨", title:"Ferrure", sub:"marechal", due:null, cls:"none", status:"Aucune ferrure enregistrée", detail:"" });
+  // Vaccins
+  ["grippe","rhino","tetanos","rage"].forEach(v => {
+    if (v === "rage" && !hd.protocol.rage) return;
+    const d = vaccineDue(hd, v), req = isRequired(v);
+    if (!d){ push({ icon:"💉", title:`Vaccin ${VACCINES[v].label.toLowerCase()}`, sub:"vaccins", due:null, cls: req ? "late" : "none",
+      status:"Aucune injection enregistrée", detail: req ? "Obligatoire pour le règlement choisi" : "" }); return; }
+    const st = dueStatus(d);
+    push({ icon:"💉", title:`Vaccin ${VACCINES[v].label.toLowerCase()}`, sub:"vaccins", due:d.due, cls:st.cls, status:`${d.label} : ${st.text.charAt(0).toLowerCase() + st.text.slice(1)}`,
+      detail:`Limite le ${fmt(d.due)}${req ? " · obligatoire" : ""}` });
+  });
+  // Vermifuge
+  const w = seasonDue();
+  if (w){
+    const left = daysBetween(t, w.due);
+    push({ icon:"🪱", title:`Vermifuge ${w.se.label.toLowerCase()}`, sub:"vermifuges", due: w.current ? w.due : w.from,
+      cls: w.current ? (left <= 30 ? "soon" : "ok") : "ok",
+      status: w.current ? `À faire avant le ${fmt(w.due, {day:"numeric", month:"long"})}` : `À partir du ${fmt(w.from, {day:"numeric", month:"long", year:"numeric"})}`,
+      detail: `${w.se.months} · ${w.se.rule}` });
+  }
+  // Concours (date limite d’injection)
+  hd.protocol.concours.filter(c => c >= t).forEach(c => {
+    const lim = addDaysIso(c, -7), clash = hd.protocol.injections.find(i => { const dd = daysBetween(i.date, c); return dd >= 0 && dd < 7; });
+    push({ icon:"🏆", title:`Concours du ${fmt(c, {day:"numeric", month:"long"})}`, sub:"vaccins", due:c, cls: clash ? "late" : "ok",
+      status: clash ? `Injection le ${fmt(clash.date, {day:"numeric", month:"short"})} : moins de 7 jours avant` : `Pas d’injection après le ${fmt(lim, {day:"numeric", month:"long"})}`,
+      detail: `Dans ${plural(Math.max(0, daysBetween(t, c)), "jour", "jours")}` });
+  });
+  // Tri : en retard d’abord, puis par date ; les éléments sans date à la fin
+  const rank = { late:0, soon:1, ok:2, none:3 };
+  items.sort((a, b) => (rank[a.cls] - rank[b.cls]) || ((a.due || "9999") .localeCompare(b.due || "9999")));
+  const list = $("#recapList"); list.innerHTML = "";
+  items.forEach(it => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "recap " + it.cls;
+    b.innerHTML = `<span class="rk" aria-hidden="true">${it.icon}</span><span class="rg"><span class="rt">${esc(it.title)}</span>
+      <div class="rs">${esc(it.status)}</div>${it.detail ? `<div class="rd">${esc(it.detail)}</div>` : ""}</span><span class="muted" aria-hidden="true">›</span>`;
+    b.onclick = () => goSub(it.sub);
+    list.append(b);
+  });
+  // Ostéo et dentiste : pas d’échéance calculée, on rappelle la dernière visite
+  const vis = $("#recapVisits"); vis.innerHTML = "";
+  [["osteo","🦴","Ostéopathe"],["dentiste","🦷","Dentiste"]].forEach(([k, icon, label]) => {
+    const l = [...hd.practitioners[k]].sort((a, b) => b.date.localeCompare(a.date))[0];
+    const b = document.createElement("button"); b.type = "button"; b.className = "recap none";
+    b.innerHTML = `<span class="rk" aria-hidden="true">${icon}</span><span class="rg"><span class="rt">${label}</span>
+      <div class="rs">${l ? `Le ${fmt(l.date)}` : "Aucune visite enregistrée"}</div>${l ? `<div class="rd">Il y a ${plural(daysBetween(l.date, t), "jour", "jours")}${l.who ? " · " + esc(l.who) : ""}</div>` : ""}</span><span class="muted" aria-hidden="true">›</span>`;
+    b.onclick = () => goSub(k);
+    vis.append(b);
+  });
 }
 
 /* --- Ostéopathe et dentiste --- */
