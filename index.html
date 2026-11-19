@@ -251,6 +251,76 @@ body.readonly .ro-hide{display:none !important}
 .day .check.small{font-size:.86rem;padding:0;color:var(--muted)}
 .day .check.small input{width:18px;height:18px}
 .day .swatch.two{background:linear-gradient(var(--c) 0 50%, var(--c2) 50% 100%)}
+/* ----- Suivi (sous-onglets) ----- */
+.subseg{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;background:var(--accent-soft);border-radius:12px;padding:4px;margin:8px 0 4px;position:sticky;top:0;z-index:5}
+.subseg button{flex:1 1 auto;border:none;background:none;padding:9px 4px;border-radius:9px;cursor:pointer;font-weight:600;color:var(--muted);font-size:.78rem;white-space:nowrap}
+.subseg button[aria-selected=true]{background:var(--surface);color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.fchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.fchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 10px 4px 4px;font-size:.82rem;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+.ftag{background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:.66rem;border-radius:999px;padding:2px 6px}
+.last-visit{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:14px;padding:14px 16px}
+.last-visit span{display:block;font-size:.82rem;color:var(--muted)}
+.last-visit strong{font-family:var(--serif);font-size:1.3rem;display:block}
+.last-visit em{font-style:normal;font-size:.88rem;color:var(--muted)}
+.due-grid{display:grid;gap:8px}
+.due{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:12px;padding:12px 14px}
+.due.late{border-left-color:var(--alert)}.due.soon{border-left-color:var(--warn)}.due.none{border-left-color:var(--line)}
+.due .dt{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.due .ds{margin-top:4px}.due.late .ds b{color:var(--alert)}.due.soon .ds b{color:var(--warn)}
+.due .dm{font-size:.82rem;color:var(--muted);margin-top:2px}
+.pchecks{display:grid;gap:4px;max-height:260px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px}
+.pchk{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:.92rem;padding:3px 2px;flex-wrap:wrap}
+.pchk input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.pchk small{color:var(--muted);font-size:.76rem}
+.inline-checks{display:flex;flex-wrap:wrap;gap:12px}
+.seasons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.season{background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.86rem}
+.season.done{border-top-color:#3E8E5A}.season.todo{border-top-color:var(--warn);background:var(--warn-soft)}.season.miss{border-top-color:var(--alert)}
+.season.skip{border-top-color:var(--muted)}.season.opt{border-top-color:var(--line)}.season.next{opacity:.75}
+.season .shead strong{font-family:var(--serif);font-size:1.05rem;display:block}
+.season .shead span{font-size:.76rem;color:var(--muted)}
+.season .sstatus{font-weight:600;margin:6px 0}
+.season.done .sstatus{color:#3E8E5A}.season.miss .sstatus{color:var(--alert)}.season.todo .sstatus{color:var(--warn)}
+.season .sinfo{font-size:.76rem;color:var(--muted);line-height:1.35}
+.season .sinfo b{color:var(--ink);font-weight:600}
+.yearnav{display:flex;align-items:center;justify-content:space-between;margin:6px 0 10px}
+.yearnav button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:6px 12px;cursor:pointer}
+.ref{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px 14px;margin-top:14px}
+.ref summary{cursor:pointer;font-weight:600;padding:10px 0}
+.ref table{width:100%;border-collapse:collapse;font-size:.84rem;margin-bottom:10px}
+.ref td,.ref th{border-top:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+.ref th{font-size:.76rem;color:var(--muted)}
+.ref p{font-size:.84rem;margin:6px 0 12px}
+@media (max-width:380px){.seasons{grid-template-columns:1fr}.subseg button{font-size:.72rem;padding:9px 2px}}
+
+/* Deux séances dans la journée */
+.day .s2{display:grid;gap:8px;border-top:1px dashed var(--line);padding-top:10px;margin-top:2px}
+.day .s2 .s2lab{font-size:.8rem;font-weight:700;color:var(--accent)}
+.day .check.small{font-size:.86rem;padding:0;color:var(--muted)}
+.day .check.small input{width:18px;height:18px}
+.day .swatch.two{background:linear-gradient(var(--c) 0 50%, var(--c2) 50% 100%)}
+.subseg::-webkit-scrollbar{display:none}
+/* Récapitulatif des échéances */
+.recap{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;width:100%;font:inherit;color:var(--ink)}
+.recap.late{border-left-color:var(--alert)}.recap.soon{border-left-color:var(--warn)}.recap.none{border-left-color:var(--line)}
+.recap .rk{flex:none;width:40px;height:40px;border-radius:10px;background:var(--accent-soft);display:grid;place-items:center;font-size:1.2rem}
+.recap .rg{flex:1;min-width:0}
+.recap .rt{font-weight:600}
+.recap .rs{font-size:.9rem;margin-top:1px}
+.recap.late .rs{color:var(--alert);font-weight:600}.recap.soon .rs{color:var(--warn);font-weight:600}
+.recap .rd{font-size:.8rem;color:var(--muted)}
+.subseg::-webkit-scrollbar{display:none}
+/* Récapitulatif des échéances */
+.recap{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left;width:100%;font:inherit;color:var(--ink)}
+.recap.late{border-left-color:var(--alert)}.recap.soon{border-left-color:var(--warn)}.recap.none{border-left-color:var(--line)}
+.recap .rk{flex:none;width:40px;height:40px;border-radius:10px;background:var(--accent-soft);display:grid;place-items:center;font-size:1.2rem}
+.recap .rg{flex:1;min-width:0}
+.recap .rt{font-weight:600}
+.recap .rs{font-size:.9rem;margin-top:1px}
+.recap.late .rs{color:var(--alert);font-weight:600}.recap.soon .rs{color:var(--warn);font-weight:600}
+.recap .rd{font-size:.8rem;color:var(--muted)}
+
+.tip{font-size:.86rem;color:var(--muted);margin:0}
 </style>
 </head>
 <body>
@@ -414,23 +484,169 @@ body.readonly .ro-hide{display:none !important}
       <div class="list" id="careList"></div>
     </section>
 
-    <section id="tab-farrier" hidden aria-label="Maréchalerie">
-      <h2>Prochaine ferrure</h2>
-      <div id="farrierStatus"></div>
-      <div class="ro-hide">
-        <h2>Enregistrer une ferrure</h2>
-        <form id="farrierForm" class="panel">
-          <div class="row">
-            <label>Date de la ferrure <input type="date" id="shoeDate" required></label>
-            <label>Intervalle (semaines) <input type="number" id="shoeInterval" min="1" max="26" step="1" required inputmode="numeric"></label>
-          </div>
-          <label>Remarque (facultatif) <input type="text" id="shoeNote" maxlength="200" placeholder="ex. Fers antérieurs seulement"></label>
-          <div class="preview" id="shoePreview"></div>
-          <button class="primary" type="button" data-submit>Enregistrer la ferrure</button>
-        </form>
+    <section id="tab-farrier" hidden aria-label="Suivi">
+<div class="subseg" id="suiviSeg" role="tablist">
+        <button type="button" role="tab" data-sub="recap" aria-selected="true">Récap</button>
+        <button type="button" role="tab" data-sub="marechal" aria-selected="false">Maréchal</button>
+        <button type="button" role="tab" data-sub="osteo" aria-selected="false">Ostéo</button>
+        <button type="button" role="tab" data-sub="dentiste" aria-selected="false">Dentiste</button>
+        <button type="button" role="tab" data-sub="vaccins" aria-selected="false">Vaccins</button>
+        <button type="button" role="tab" data-sub="vermifuges" aria-selected="false">Vermifuges</button>
       </div>
-      <h3>Historique</h3>
-      <div class="list" id="shoeList"></div>
+      <div data-subpanel="recap">
+        <div class="notice" id="recapMissing" hidden style="margin-top:12px">Seule la ferrure est suivie pour l’instant : l’administrateur doit mettre à jour la base de données pour activer ostéopathe, dentiste, vaccins et vermifuges.</div>
+        <h2>Prochaines échéances</h2>
+        <div class="list" id="recapList"></div>
+        <h3>Dernières visites</h3>
+        <div class="list" id="recapVisits"></div>
+      </div>
+      <div data-subpanel="marechal" hidden>
+        <h2>Prochaine ferrure</h2>
+        <div id="farrierStatus"></div>
+        <div class="ro-hide">
+          <h2>Enregistrer une ferrure</h2>
+          <form id="farrierForm" class="panel">
+            <div class="row">
+              <label>Date de la ferrure <input type="date" id="shoeDate" required></label>
+              <label>Intervalle (semaines) <input type="number" id="shoeInterval" min="1" max="26" step="1" required inputmode="numeric"></label>
+            </div>
+            <label>Remarque (facultatif) <input type="text" id="shoeNote" maxlength="200" placeholder="ex. Fers antérieurs seulement"></label>
+            <div class="preview" id="shoePreview"></div>
+            <button class="primary" type="button" data-submit>Enregistrer la ferrure</button>
+          </form>
+        </div>
+        <h3>Historique</h3>
+        <div class="list" id="shoeList"></div>
+      </div>
+      <div data-subpanel="osteo" hidden>
+        <div id="osteoLast" style="margin-top:12px"></div>
+        <h2 class="ro-hide">Nouvelle intervention</h2>
+        <form id="osteoForm" class="panel ro-hide">
+          <div class="row">
+            <label>Date de l’intervention <input type="date" id="osteoDate" required></label>
+            <label>Ostéopathe (facultatif) <input type="text" id="osteoWho" list="osteoWhoList" maxlength="60" placeholder="Nom de l’ostéopathe"></label>
+          </div>
+          <datalist id="osteoWhoList"></datalist>
+          <label>Remarque (facultatif) <input type="text" id="osteoNote" maxlength="300"></label>
+          <label>Fichiers (compte rendu, feuille de soin…) <input type="file" id="osteoFiles" multiple></label>
+          <button class="primary" type="button" data-submit>Enregistrer l’intervention</button>
+        </form>
+        <h3>Historique</h3>
+        <div class="list" id="osteoList"></div>
+      </div>
+      <div data-subpanel="dentiste" hidden>
+        <div id="dentisteLast" style="margin-top:12px"></div>
+        <h2 class="ro-hide">Nouvelle intervention</h2>
+        <form id="dentisteForm" class="panel ro-hide">
+          <div class="row">
+            <label>Date de l’intervention <input type="date" id="dentisteDate" required></label>
+            <label>Dentiste (facultatif) <input type="text" id="dentisteWho" list="dentisteWhoList" maxlength="60" placeholder="Nom du dentiste"></label>
+          </div>
+          <datalist id="dentisteWhoList"></datalist>
+          <label>Remarque (facultatif) <input type="text" id="dentisteNote" maxlength="300"></label>
+          <label>Fichiers (compte rendu, feuille de soin…) <input type="file" id="dentisteFiles" multiple></label>
+          <button class="primary" type="button" data-submit>Enregistrer l’intervention</button>
+        </form>
+        <h3>Historique</h3>
+        <div class="list" id="dentisteList"></div>
+      </div>
+      <div data-subpanel="vaccins" hidden>
+        <h2>Vaccins : prochaines échéances</h2>
+        <div class="due-grid" id="vaccDue"></div>
+        <div class="panel" style="margin-top:10px;display:grid;gap:10px">
+          <div class="row">
+            <label>Règlement suivi
+              <select id="protoReglement"><option value="club">FFE Club / Poney</option><option value="amateur">FFE Amateur</option></select>
+            </label>
+            <label>Rappel tétanos tous les
+              <select id="protoTetanos"><option value="2">2 ans</option><option value="3">3 ans</option></select>
+            </label>
+          </div>
+          <label class="check"><input type="checkbox" id="protoRage"> Suivre aussi la rage</label>
+        </div>
+
+        <h2>Concours prévus</h2>
+        <form id="concoursForm" class="panel ro-hide" style="grid-template-columns:1fr auto;align-items:end">
+          <label>Date du concours <input type="date" id="concoursDate" required></label>
+          <button class="ghost" type="button" data-submit>Ajouter</button>
+        </form>
+        <p class="tip" style="margin:6px 4px 8px">Aucune injection dans les 7 jours qui précèdent un concours.</p>
+        <div class="list" id="concoursList"></div>
+
+        <h2 class="ro-hide">Enregistrer une injection</h2>
+        <form id="injForm" class="panel ro-hide">
+          <div class="row">
+            <label>Date de l’injection <input type="date" id="injDate" required></label>
+            <label>Étape
+              <select id="injStage"><option value="rappel">Rappel</option><option value="v1">Primo V1</option><option value="v2">Primo V2</option><option value="v3">Primo V3</option></select>
+            </label>
+          </div>
+          <div><p class="muted" style="margin:0 0 6px;font-size:.9rem">Vaccin(s) injecté(s)</p>
+            <div class="pchecks" id="injProducts"></div></div>
+          <div id="injOther" hidden style="display:grid;gap:8px">
+            <label>Nom du produit <input type="text" id="injOtherName" maxlength="60"></label>
+            <div class="inline-checks" id="injOtherVaccines">
+              <label class="pchk"><input type="checkbox" value="grippe"> Grippe</label>
+              <label class="pchk"><input type="checkbox" value="rhino"> Rhinopneumonie</label>
+              <label class="pchk"><input type="checkbox" value="tetanos"> Tétanos</label>
+              <label class="pchk"><input type="checkbox" value="rage"> Rage</label>
+            </div>
+          </div>
+          <label>Remarque (facultatif) <input type="text" id="injNote" maxlength="300" placeholder="ex. Dr Martin, n° de lot…"></label>
+          <label>Fichiers (feuille de soin, facture…) <input type="file" id="injFiles" multiple></label>
+          <button class="primary" type="button" data-submit>Enregistrer l’injection</button>
+        </form>
+        <h3>Historique des injections</h3>
+        <div class="list" id="injList"></div>
+
+        <details class="ref">
+          <summary>Schéma vaccinal de référence</summary>
+          <table><thead><tr><th>Étape</th><th>Délai</th><th>Vaccins</th></tr></thead><tbody>
+            <tr><td>Primo V1</td><td>Jour J</td><td>Grippe + Tétanos + Rhinopneumonie</td></tr>
+            <tr><td>Primo V2</td><td>21 à 92 jours après V1</td><td>Grippe + Tétanos + Rhinopneumonie</td></tr>
+            <tr><td>Primo V3</td><td>Au plus tard 6 mois (+21 j de tolérance) après V2</td><td>Grippe + Tétanos + Rhinopneumonie</td></tr>
+            <tr><td>Rappel 1</td><td>12 mois max après V3</td><td>Grippe + Rhinopneumonie + Tétanos</td></tr>
+            <tr><td>Rappel 2</td><td>12 mois max après le rappel précédent</td><td>Grippe + Rhinopneumonie</td></tr>
+            <tr><td>Rappel 3</td><td>12 mois max après le rappel précédent</td><td>Grippe + Rhinopneumonie + Tétanos (tous les 2 ou 3 ans selon le vaccin)</td></tr>
+            <tr><td>Rage</td><td>Dès 6 mois, puis tous les 12 mois</td><td>Rabisin, Nobivac Rabies</td></tr>
+          </tbody></table>
+          <p>Rhinopneumonie : obligatoire en FFE Amateur et Pro (pas en Club / Poney), rappel conseillé tous les 6 mois. FEI : rappel grippe dans les 6 mois + 21 jours avant une compétition. Aucune injection dans les 7 jours avant un concours. À valider avec votre vétérinaire.</p>
+        </details>
+      </div>
+      <div data-subpanel="vermifuges" hidden>
+        <h2>Vermifuges</h2>
+        <div class="yearnav"><button type="button" id="wormPrev" aria-label="Année précédente">‹</button><strong id="wormYear"></strong><button type="button" id="wormNext" aria-label="Année suivante">›</button></div>
+        <div class="seasons" id="wormSeasons"></div>
+        <p class="preview" id="wormHint" style="margin-top:10px" hidden></p>
+        <h3 class="ro-hide">Enregistrer un vermifuge</h3>
+        <form id="wormForm" class="panel ro-hide">
+          <label>Date <input type="date" id="wormDate" required></label>
+          <label class="check"><input type="checkbox" id="wormSkip"> Non traité cette saison (coproscopie inférieure à 200 OPG)</label>
+          <div id="wormProductWrap" style="display:grid;gap:10px">
+            <label>Vermifuge donné <select id="wormProduct" required></select></label>
+            <label id="wormOther" hidden>Nom du produit <input type="text" id="wormOtherName" maxlength="60"></label>
+            <label>Molécule <input type="text" id="wormMolecule" maxlength="80"></label>
+          </div>
+          <label>Coproscopie en OPG (facultatif) <input type="number" id="wormOpg" min="0" step="1" inputmode="numeric" placeholder="ex. 350"></label>
+          <label>Remarque (facultatif) <input type="text" id="wormNote" maxlength="300"></label>
+          <label>Fichiers (coproscopie, facture…) <input type="file" id="wormFiles" multiple></label>
+          <button class="primary" type="button" data-submit>Enregistrer</button>
+        </form>
+        <h3>Historique des vermifuges</h3>
+        <div class="list" id="wormList"></div>
+
+        <details class="ref">
+          <summary>Calendrier de référence des vermifuges</summary>
+          <table><thead><tr><th>Saison</th><th>Molécules</th><th>Quand</th></tr></thead><tbody>
+            <tr><td>Printemps</td><td>Ivermectine ou Pyrantel</td><td>Si coproscopie &gt; 200 OPG</td></tr>
+            <tr><td>Été</td><td>Pyrantel ou Ivermectine (alterner)</td><td>Si coproscopie &gt; 200 OPG</td></tr>
+            <tr><td>Automne</td><td>Moxidectine + Praziquantel ou Ivermectine + Praziquantel</td><td>Systématique, après les premières gelées</td></tr>
+            <tr><td>Hiver</td><td>Moxidectine (si non faite à l’automne) ou Fenbendazole 5 jours</td><td>Uniquement si fort risque de larves enkystées</td></tr>
+          </tbody></table>
+          <p>Au printemps et en été, faire une coproscopie : traiter au-delà de 200 OPG. À valider avec votre vétérinaire.</p>
+        </details>
+      </div>
+      <div class="notice" id="suiviMissing" hidden style="margin-top:14px">Cette partie n’est pas encore activée : l’administrateur de la structure doit lancer la mise à jour de la base de données (script « supabase-migration-suivi.sql »). Les ferrures restent disponibles dans « Maréchal ».</div>
     </section>
 
     <section id="tab-photos" hidden aria-label="Photos">
@@ -453,7 +669,7 @@ body.readonly .ro-hide{display:none !important}
     <button data-tab="week" aria-current="page"><span>📅</span>Semaine</button>
     <button data-tab="docs"><span>🧾</span>Factures</button>
     <button data-tab="care"><span>💊</span>Soins</button>
-    <button data-tab="farrier"><span>🔨</span>Maréchal</button>
+    <button data-tab="farrier"><span>🩺</span>Suivi</button>
     <button data-tab="photos"><span>📷</span>Photos</button>
   </nav>
 </div>
@@ -907,7 +1123,7 @@ async function renderHome(){
     ? "Ajoutez le premier cheval de la structure, puis invitez les membres avec le bouton 👥."
     : "Aucun cheval ne vous est encore ouvert. Demandez à l’administrateur de la structure de vous donner accès.";
   const ids = horses.map(h => h.id), t = todayISO();
-  let lastShoe = {}, activeCount = {}, urls = {};
+  let lastShoe = {}, activeCount = {}, urls = {}, protoByHorse = {};
   if (ids.length){
     try {
       const [sh, tr, u] = await Promise.all([
@@ -916,6 +1132,16 @@ async function renderHome(){
         signedUrls(horses.map(h => h.photo_path).filter(Boolean))
       ]);
       sh.forEach(s => { if (!lastShoe[s.horse_id]) lastShoe[s.horse_id] = s; });
+      // Vaccins (ignoré tant que la base n’a pas été mise à jour)
+      const [pi, pp] = await Promise.all([
+        sb.from("injections").select("horse_id,date,stage,vaccines").in("horse_id", ids),
+        sb.from("horse_protocol").select("horse_id,reglement,tetanos_years,rage").in("horse_id", ids)
+      ]);
+      if (!pi.error && !pp.error) ids.forEach(id => {
+        const pr = pp.data.find(x => x.horse_id === id) || {};
+        protoByHorse[id] = { protocol: { reglement: pr.reglement || "club", tetanosYears: pr.tetanos_years || 2, rage: !!pr.rage,
+          injections: pi.data.filter(x => x.horse_id === id).map(x => ({ date:x.date, stage:x.stage, vaccines:x.vaccines || [] })) } };
+      });
       tr.forEach(x => { activeCount[x.horse_id] = (activeCount[x.horse_id] || 0) + 1; });
       urls = u;
     } catch(e){}
@@ -932,6 +1158,8 @@ async function renderHome(){
       else parts.push(`Ferrure dans ${plural(left,"jour","jours")}`);
     }
     if (activeCount[h.id]) parts.push(`${plural(activeCount[h.id],"traitement","traitements")} en cours`);
+    const va = protoByHorse[h.id] && vaccineAlert(protoByHorse[h.id]);
+    if (va){ parts.push(va.text); if (va.cls === "late" || !cls) cls = va.cls; }
     if (levelFor(h.id) < 2) parts.push("Lecture seule");
     const b = document.createElement("button"); b.className = "horse-card"; b.type = "button";
     b.innerHTML = `${horsePhotoHTML(h, urls, "pic")}<div class="info"><div class="name">${esc(h.name)}</div><div class="sub ${cls}">${esc(parts.join(" · ") || "Rien à signaler")}</div></div>`;
@@ -955,7 +1183,7 @@ async function enterHorse(id, push = true){
   cur = horses.find(h => h.id === id); if (!cur) return goHome();
   level = levelFor(id);
   document.body.classList.toggle("readonly", level < 2);
-  weekStart = monday(new Date()); docFilter = "Toutes"; $("#shoeInterval").value = "";
+  weekStart = monday(new Date()); docFilter = "Toutes"; $("#shoeInterval").value = ""; suiviSub = "recap"; hd = emptySuivi();
   renderAppHeader();
   showScreen("app");
   if (push){ try { history.pushState({horse:id}, "", "#cheval"); } catch(e){} }
@@ -984,7 +1212,7 @@ function showTab(name){
     if (b.dataset.tab === name) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
   });
   window.scrollTo(0, 0);
-  ({ week:renderWeek, docs:renderDocs, care:renderCare, farrier:renderFarrier, photos:renderPhotos })[name]();
+  ({ week:renderWeek, docs:renderDocs, care:renderCare, farrier:renderSuivi, photos:renderPhotos })[name]();
 }
 document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
 // Quand on revient sur l’appli, on recharge pour voir les saisies des autres
@@ -1091,11 +1319,12 @@ onSubmit("#horseForm", async () => {
 $("#editHorse").onclick = () => openHorseForm(cur.id);
 $("#deleteHorse").onclick = async () => {
   const h = horses.find(x => x.id === editingId);
-  if (!(await askConfirm(`Supprimer ${h.name} et toutes ses données (activités, factures, soins, ferrures, photos) pour tous les membres ? Cette action est définitive.`, `Supprimer ${h.name}`))) return;
+  if (!(await askConfirm(`Supprimer ${h.name} et toutes ses données (activités, factures, soins, suivi, photos) pour tous les membres ? Cette action est définitive.`, `Supprimer ${h.name}`))) return;
   try {
     const docs = await q(sb.from("documents").select("path").eq("horse_id", h.id));
+    const sf = await sb.from("suivi_files").select("path").eq("horse_id", h.id);
     await q(sb.from("horses").delete().eq("id", h.id));
-    removeFiles([...docs.map(d => d.path), h.photo_path]);
+    removeFiles([...docs.map(d => d.path), ...((sf.data || []).map(d => d.path)), h.photo_path]);
     await loadHorses();
     closeSheet($("#horseSheet")); toast(`${h.name} a été supprimé`);
     if (history.state && history.state.horse){ try { history.back(); } catch(e){ goHome(); } } else goHome();
@@ -1611,7 +1840,7 @@ $("#shoeInterval").addEventListener("input", updatePreview);
 onSubmit("#farrierForm", async () => {
   const n = parseInt($("#shoeInterval").value, 10); if (!(n > 0)) return;
   await q(sb.from("shoeings").insert({ horse_id: cur.id, date: $("#shoeDate").value, interval_weeks: n, note: $("#shoeNote").value.trim() || null }));
-  $("#shoeNote").value = ""; toast("Ferrure enregistrée"); renderFarrier();
+  $("#shoeNote").value = ""; toast("Ferrure enregistrée"); renderFarrier(); loadSuivi().catch(() => {});
 });
 async function renderFarrier(){
   const horse = cur;
@@ -1655,6 +1884,492 @@ async function renderFarrier(){
     list.append(it);
   });
 }
+
+/* =====================================================================
+   SUIVI : sous-onglets Maréchal, Ostéopathe, Dentiste, Protocole
+   ===================================================================== */
+
+/* --- Données du suivi, chargées depuis Supabase pour le cheval ouvert --- */
+const emptySuivi = () => ({ practitioners:{ osteo:[], dentiste:[] }, files:{}, lastShoe:null,
+  protocol:{ reglement:"club", tetanosYears:2, rage:false, injections:[], vermifuges:[], concours:[], concoursIds:{} } });
+let hd = emptySuivi(), suiviReady = null;   // null : pas encore vérifié ; false : tables absentes de la base
+const tableMissing = err => err && (err.code === "42P01" || err.code === "PGRST205" || /does not exist|Could not find the table/i.test(err.message || ""));
+async function loadSuivi(){
+  const id = cur.id, data = emptySuivi();
+  const sh = await sb.from("shoeings").select("date,interval_weeks").eq("horse_id", id).order("date", {ascending:false}).limit(1);
+  if (!sh.error && sh.data[0]) data.lastShoe = sh.data[0];
+  const [iv, pr, inj, ve, co, fi] = await Promise.all([
+    sb.from("interventions").select("*").eq("horse_id", id),
+    sb.from("horse_protocol").select("*").eq("horse_id", id).maybeSingle(),
+    sb.from("injections").select("*").eq("horse_id", id),
+    sb.from("vermifuges").select("*").eq("horse_id", id),
+    sb.from("concours").select("id,date").eq("horse_id", id),
+    sb.from("suivi_files").select("*").eq("horse_id", id).order("created_at")
+  ]);
+  const errs = [iv, pr, inj, ve, co, fi].map(r => r.error).filter(Boolean);
+  if (errs.some(tableMissing)){ suiviReady = false; if (cur && cur.id === id) hd = data; return; }
+  if (errs.length){ toast(errMsg(errs[0]), 4000); throw errs[0]; }
+  suiviReady = true;
+  iv.data.forEach(r => data.practitioners[r.kind].push({ id:r.id, date:r.date, who:r.who || "", note:r.note || "", by:r.created_by }));
+  if (pr.data) Object.assign(data.protocol, { reglement: pr.data.reglement, tetanosYears: pr.data.tetanos_years, rage: pr.data.rage });
+  data.protocol.injections = inj.data.map(r => ({ id:r.id, date:r.date, stage:r.stage, vaccines:r.vaccines || [], products:r.products || [], note:r.note || "", by:r.created_by }));
+  data.protocol.vermifuges = ve.data.map(r => ({ id:r.id, date:r.date, skip:r.skip, product:r.product || "", molecule:r.molecule || "", opg:r.opg, note:r.note || "", by:r.created_by }));
+  data.protocol.concours = co.data.map(r => r.date).sort();
+  co.data.forEach(r => { data.protocol.concoursIds[r.date] = r.id; });
+  fi.data.forEach(f => { (data.files[f.ref_id] = data.files[f.ref_id] || []).push(f); });
+  if (cur && cur.id === id) hd = data;
+}
+async function saveProtocolSettings(){
+  await q(sb.from("horse_protocol").upsert({ horse_id: cur.id, reglement: hd.protocol.reglement, tetanos_years: hd.protocol.tetanosYears,
+    rage: hd.protocol.rage, updated_by: user.id, updated_at: new Date().toISOString() }));
+}
+let suiviSub = "recap";
+document.querySelectorAll("#suiviSeg button").forEach(b => b.onclick = () => goSub(b.dataset.sub));
+async function renderSuivi(reload = true){
+  const horse = cur;
+  if (reload){ try { await loadSuivi(); } catch(e){ return; } }
+  if (cur !== horse) return;
+  document.querySelectorAll("#suiviSeg button").forEach(b => b.setAttribute("aria-selected", b.dataset.sub === suiviSub));
+  const missing = suiviReady === false && !["recap","marechal"].includes(suiviSub);
+  document.querySelectorAll("[data-subpanel]").forEach(p => { p.hidden = missing || p.dataset.subpanel !== suiviSub; });
+  $("#suiviMissing").hidden = !missing;
+  $("#recapMissing").hidden = !(suiviReady === false && suiviSub === "recap");
+  // Lecture seule : réglages du protocole non modifiables
+  ["#protoReglement","#protoTetanos","#protoRage"].forEach(x => { $(x).disabled = level < 2; });
+  if (missing) return;
+  if (suiviSub === "recap") renderRecap();
+  else if (suiviSub === "marechal") renderFarrier();
+  else if (suiviSub === "osteo" || suiviSub === "dentiste") renderPractitioner(suiviSub);
+  else renderProtocol();   // vaccins et vermifuges
+}
+const refresh = async () => { try { await loadSuivi(); } catch(e){} };
+const addMonths = (s, m) => { const d = parse(s), day = d.getDate(); const x = new Date(d.getFullYear(), d.getMonth() + m, 1);
+  x.setDate(Math.min(day, new Date(x.getFullYear(), x.getMonth() + 1, 0).getDate())); return iso(x); };
+const addDaysIso = (s, n) => iso(addDays(parse(s), n));
+
+/* --- Fichiers joints à une entrée de suivi --- */
+async function saveAttachments(inputSel, refId){
+  const files = [...$(inputSel).files];
+  for (const file of files){
+    const path = `${cur.id}/suivi/${newId()}-${safeName(file.name)}`;
+    await uploadFile(path, file, file.type);
+    try { await q(sb.from("suivi_files").insert({ horse_id: cur.id, ref_id: refId, name: file.name, mime: file.type || null, size: file.size, path })); }
+    catch(e){ removeFiles([path]); throw e; }
+  }
+  $(inputSel).value = "";
+  return files.length;
+}
+async function attachmentsByRef(){ return hd.files; }
+async function deleteAttachments(refId){
+  const list = hd.files[refId] || [];
+  if (!list.length) return;
+  await q(sb.from("suivi_files").delete().eq("ref_id", refId).eq("horse_id", cur.id));
+  removeFiles(list.map(f => f.path));
+}
+function fileChips(files){
+  const box = document.createElement("div"); box.className = "fchips";
+  (files || []).forEach(f => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "fchip";
+    b.innerHTML = `<span class="ftag">${esc(typeLabel(f))}</span>${esc(f.name)}`;
+    b.onclick = e => { e.stopPropagation(); openDocViewer(f); };
+    box.append(b);
+  });
+  return box;
+}
+function historyItem(title, meta, files, onDelete, by){
+  const it = document.createElement("div"); it.className = "item"; it.style.alignItems = "flex-start";
+  const grow = document.createElement("div"); grow.className = "grow";
+  const who = by ? `saisi par ${esc(memberName(by))}` : "";
+  const m = [meta, who].filter(Boolean).join(" · ");
+  grow.innerHTML = `<div class="title">${title}</div>${m ? `<div class="meta">${m}</div>` : ""}`;
+  if (files && files.length) grow.append(fileChips(files));
+  it.append(grow);
+  if (level === 2){
+    const del = document.createElement("button"); del.className = "danger"; del.textContent = "Supprimer";
+    del.onclick = async () => { try { await onDelete(); } catch(e){} };
+    it.append(del);
+  }
+  return it;
+}
+
+
+/* --- Récapitulatif des échéances --- */
+// Affichage immédiat avec les données déjà chargées, puis rafraîchissement (saisies des autres membres)
+function goSub(sub){ suiviSub = sub; window.scrollTo(0, 0); if (suiviReady !== null) renderSuivi(false); renderSuivi(); }
+function seasonDue(){
+  // Prochain vermifuge : saison en cours non faite, sinon prochaine saison (l’hiver est facultatif)
+  const t = todayISO(), y = parse(t).getFullYear(), cur0 = seasonOf(t);
+  const order = ["hiver","printemps","ete","automne"];
+  const doneIn = (year, key) => hd.protocol.vermifuges.some(w => parse(w.date).getFullYear() === year && seasonOf(w.date) === key);
+  const end = (year, se) => iso(new Date(year, se.m[se.m.length - 1], 0));
+  const start = (year, se) => iso(new Date(year, se.m[0] - 1, 1));
+  let i = order.indexOf(cur0), year = y;
+  for (let n = 0; n < 5; n++){
+    const se = SEASONS.find(x => x.key === order[i]);
+    if (!se.optional && !doneIn(year, se.key)) return { se, from: start(year, se), due: end(year, se), current: n === 0 };
+    i++; if (i > 3){ i = 0; year++; }
+  }
+  return null;
+}
+function renderRecap(){
+  const items = [], t = todayISO();
+  const push = (o) => items.push(o);
+  // Maréchal
+  const last = hd.lastShoe;
+  if (last){
+    const due = nextShoe(last.date, last.interval_weeks), left = daysBetween(t, due);
+    push({ icon:"🔨", title:"Ferrure", sub:"marechal", due,
+      cls: left < 0 ? "late" : left <= 7 ? "soon" : "ok",
+      status: left < 0 ? `En retard de ${plural(-left, "jour", "jours")}` : left === 0 ? "Aujourd’hui" : `Dans ${plural(left, "jour", "jours")}`,
+      detail: `Prévue le ${fmt(due)} · dernière le ${fmt(last.date, {day:"numeric", month:"short"})}` });
+  } else push({ icon:"🔨", title:"Ferrure", sub:"marechal", due:null, cls:"none", status:"Aucune ferrure enregistrée", detail:"" });
+  if (suiviReady !== false){   // modules actifs seulement après la mise à jour de la base
+  // Vaccins
+  ["grippe","rhino","tetanos","rage"].forEach(v => {
+    if (v === "rage" && !hd.protocol.rage) return;
+    const d = vaccineDue(hd, v), req = isRequired(v);
+    if (!d){ push({ icon:"💉", title:`Vaccin ${VACCINES[v].label.toLowerCase()}`, sub:"vaccins", due:null, cls: req ? "late" : "none",
+      status:"Aucune injection enregistrée", detail: req ? "Obligatoire pour le règlement choisi" : "" }); return; }
+    const st = dueStatus(d);
+    push({ icon:"💉", title:`Vaccin ${VACCINES[v].label.toLowerCase()}`, sub:"vaccins", due:d.due, cls:st.cls, status:`${d.label} : ${st.text.charAt(0).toLowerCase() + st.text.slice(1)}`,
+      detail:`Limite le ${fmt(d.due)}${req ? " · obligatoire" : ""}` });
+  });
+  // Vermifuge
+  const w = seasonDue();
+  if (w){
+    const left = daysBetween(t, w.due);
+    push({ icon:"🪱", title:`Vermifuge ${w.se.label.toLowerCase()}`, sub:"vermifuges", due: w.current ? w.due : w.from,
+      cls: w.current ? (left <= 30 ? "soon" : "ok") : "ok",
+      status: w.current ? `À faire avant le ${fmt(w.due, {day:"numeric", month:"long"})}` : `À partir du ${fmt(w.from, {day:"numeric", month:"long", year:"numeric"})}`,
+      detail: `${w.se.months} · ${w.se.rule}` });
+  }
+  // Concours (date limite d’injection)
+  hd.protocol.concours.filter(c => c >= t).forEach(c => {
+    const lim = addDaysIso(c, -7), clash = hd.protocol.injections.find(i => { const dd = daysBetween(i.date, c); return dd >= 0 && dd < 7; });
+    push({ icon:"🏆", title:`Concours du ${fmt(c, {day:"numeric", month:"long"})}`, sub:"vaccins", due:c, cls: clash ? "late" : "ok",
+      status: clash ? `Injection le ${fmt(clash.date, {day:"numeric", month:"short"})} : moins de 7 jours avant` : `Pas d’injection après le ${fmt(lim, {day:"numeric", month:"long"})}`,
+      detail: `Dans ${plural(Math.max(0, daysBetween(t, c)), "jour", "jours")}` });
+  });
+  }
+  // Tri : en retard d’abord, puis par date ; les éléments sans date à la fin
+  const rank = { late:0, soon:1, ok:2, none:3 };
+  items.sort((a, b) => (rank[a.cls] - rank[b.cls]) || ((a.due || "9999") .localeCompare(b.due || "9999")));
+  const list = $("#recapList"); list.innerHTML = "";
+  items.forEach(it => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "recap " + it.cls;
+    b.innerHTML = `<span class="rk" aria-hidden="true">${it.icon}</span><span class="rg"><span class="rt">${esc(it.title)}</span>
+      <div class="rs">${esc(it.status)}</div>${it.detail ? `<div class="rd">${esc(it.detail)}</div>` : ""}</span><span class="muted" aria-hidden="true">›</span>`;
+    b.onclick = () => goSub(it.sub);
+    list.append(b);
+  });
+  // Ostéo et dentiste : pas d’échéance calculée, on rappelle la dernière visite
+  const vis = $("#recapVisits"); vis.innerHTML = "";
+  vis.hidden = vis.previousElementSibling.hidden = suiviReady === false;
+  if (suiviReady === false) return;
+  [["osteo","🦴","Ostéopathe"],["dentiste","🦷","Dentiste"]].forEach(([k, icon, label]) => {
+    const l = [...hd.practitioners[k]].sort((a, b) => b.date.localeCompare(a.date))[0];
+    const b = document.createElement("button"); b.type = "button"; b.className = "recap none";
+    b.innerHTML = `<span class="rk" aria-hidden="true">${icon}</span><span class="rg"><span class="rt">${label}</span>
+      <div class="rs">${l ? `Le ${fmt(l.date)}` : "Aucune visite enregistrée"}</div>${l ? `<div class="rd">Il y a ${plural(daysBetween(l.date, t), "jour", "jours")}${l.who ? " · " + esc(l.who) : ""}</div>` : ""}</span><span class="muted" aria-hidden="true">›</span>`;
+    b.onclick = () => goSub(k);
+    vis.append(b);
+  });
+}
+
+/* --- Ostéopathe et dentiste --- */
+const PRACT = { osteo: { label:"Ostéopathe", empty:"Aucune séance d’ostéopathie enregistrée." },
+                dentiste: { label:"Dentiste", empty:"Aucun passage du dentiste enregistré." } };
+["osteo","dentiste"].forEach(kind => {
+  onSubmit(`#${kind}Form`, async () => {
+    const entry = { id: newId(), date: $(`#${kind}Date`).value, who: $(`#${kind}Who`).value.trim(), note: $(`#${kind}Note`).value.trim() };
+    try {
+      await q(sb.from("interventions").insert({ id: entry.id, horse_id: cur.id, kind, date: entry.date, who: entry.who || null, note: entry.note || null }));
+      const n = await saveAttachments(`#${kind}Files`, entry.id);
+      $(`#${kind}Note`).value = "";
+      toast(n ? `Intervention et ${plural(n, "fichier", "fichiers")} enregistrés` : "Intervention enregistrée");
+    } catch(e){}
+    await refresh(); renderPractitioner(kind);
+  });
+});
+async function renderPractitioner(kind){
+  const list = $(`#${kind}List`); list.innerHTML = "";
+  const all = [...hd.practitioners[kind]].sort((a, b) => b.date.localeCompare(a.date));
+  $(`#${kind}WhoList`).innerHTML = [...new Set(all.map(e => e.who).filter(Boolean))].map(w => `<option value="${esc(w)}">`).join("");
+  if (!$(`#${kind}Who`).value && all[0] && all[0].who) $(`#${kind}Who`).value = all[0].who;
+  const last = all[0];
+  $(`#${kind}Last`).innerHTML = last
+    ? `<div class="last-visit"><span>Dernière intervention</span><strong>${cap(fmt(last.date, {weekday:"long", day:"numeric", month:"long", year:"numeric"}))}</strong><em>il y a ${plural(daysBetween(last.date, todayISO()), "jour", "jours")}${last.who ? " · " + esc(last.who) : ""}</em></div>` : "";
+  if (!all.length){ list.innerHTML = `<div class="empty">${PRACT[kind].empty}</div>`; return; }
+  const files = await attachmentsByRef();
+  all.forEach(e => list.append(historyItem(fmt(e.date), [e.who, e.note].filter(Boolean).map(esc).join(" · "), files[e.id], async () => {
+    if (!(await askConfirm("Supprimer cette intervention et ses fichiers pour tous les membres ?"))) return;
+    await deleteAttachments(e.id);
+    await q(sb.from("interventions").delete().eq("id", e.id));
+    await refresh(); renderPractitioner(kind);
+  }, e.by)));
+}
+
+/* --- Protocole : vaccins --- */
+const VACCINES = {
+  grippe:  { label:"Grippe" },
+  rhino:   { label:"Rhinopneumonie" },
+  tetanos: { label:"Tétanos" },
+  rage:    { label:"Rage" }
+};
+const VACCINE_PRODUCTS = [
+  { name:"ProteqFlu-Te", v:["grippe","tetanos"] }, { name:"Equilis Prequenza Te", v:["grippe","tetanos"] }, { name:"Equip FT", v:["grippe","tetanos"] },
+  { name:"ProteqFlu", v:["grippe"] }, { name:"Equilis Prequenza", v:["grippe"] }, { name:"Equip F", v:["grippe"] },
+  { name:"Equip EHV 1,4", v:["rhino"] }, { name:"Pneumequine", v:["rhino"] },
+  { name:"Duvaxyn IE-T Plus", v:["grippe","rhino","tetanos"] },
+  { name:"Equilis Tetanus-Vaccine", v:["tetanos"] }, { name:"Equip T", v:["tetanos"] },
+  { name:"Rabisin", v:["rage"] }, { name:"Nobivac Rabies", v:["rage"] }
+];
+const STAGES = { v1:"Primo V1", v2:"Primo V2", v3:"Primo V3", rappel:"Rappel" };
+function isRequired(v){ const r = hd.protocol.reglement; return v === "grippe" || (v === "rhino" && r === "amateur"); }
+// Calcule la prochaine échéance d’un vaccin à partir des injections déjà faites
+function vaccineDue(data, v){
+  const p = data.protocol;
+  const inj = p.injections.filter(i => i.vaccines.includes(v) && i.date <= todayISO()).sort((a, b) => a.date.localeCompare(b.date));
+  const last = inj[inj.length - 1];
+  if (!last) return null;
+  if (v === "rage") return { label:"Rappel annuel", from:null, due: addMonths(last.date, 12), last };
+  if (last.stage === "v1") return { label:"Primo V2", from: addDaysIso(last.date, 21), due: addDaysIso(last.date, 92), last };
+  if (last.stage === "v2") return { label:"Primo V3", from: addMonths(last.date, 4), due: addDaysIso(addMonths(last.date, 6), 21), last };
+  if (v === "tetanos"){
+    const years = p.tetanosYears || 2;
+    // Après la primo, premier rappel à 1 an, puis selon l’intervalle du vaccin
+    const n = inj.filter(i => i.stage === "rappel").length;
+    return { label:"Rappel tétanos", from:null, due: addMonths(last.date, last.stage === "v3" || n === 0 ? 12 : years * 12), last };
+  }
+  return { label:"Rappel annuel", from:null, due: addMonths(last.date, 12), last, advice: v === "rhino" ? "Rappel conseillé tous les 6 mois" : "" };
+}
+function dueStatus(d){
+  const t = todayISO(), left = daysBetween(t, d.due);
+  if (left < 0) return { cls:"late", text:`En retard de ${plural(-left, "jour", "jours")}` };
+  if (d.from && t < d.from) return { cls:"ok", text:`À faire entre le ${fmt(d.from, {day:"numeric", month:"short"})} et le ${fmt(d.due, {day:"numeric", month:"short", year:"numeric"})}` };
+  if (left <= 30) return { cls:"soon", text: left === 0 ? "À faire aujourd’hui" : `À faire dans ${plural(left, "jour", "jours")}` };
+  return { cls:"ok", text:`Dans ${plural(left, "jour", "jours")}` };
+}
+// Résumé pour la carte du cheval à l’accueil
+function vaccineAlert(data){
+  const p = data.protocol; if (!p) return null;
+  let worst = null;
+  ["grippe","rhino","tetanos","rage"].forEach(v => {
+    const required = v === "grippe" || (v === "rhino" && p.reglement === "amateur");
+    if (v === "rage" && !p.rage) return;
+    const d = vaccineDue(data, v); if (!d) return;
+    const left = daysBetween(todayISO(), d.due);
+    if ((left < 0 || left <= 30) && (!worst || left < worst.left)) worst = { v, left, required };
+  });
+  if (!worst) return null;
+  const name = VACCINES[worst.v].label.toLowerCase();
+  return worst.left < 0 ? { cls:"late", text:`Vaccin ${name} en retard` } : { cls:"soon", text:`Vaccin ${name} dans ${plural(worst.left, "jour", "jours")}` };
+}
+
+/* Formulaire d’injection */
+(function buildVaccineForm(){
+  $("#injProducts").innerHTML = VACCINE_PRODUCTS.map((p, i) =>
+    `<label class="pchk"><input type="checkbox" value="${i}"> ${esc(p.name)} <small>${p.v.map(v => VACCINES[v].label).join(" + ")}</small></label>`).join("") +
+    `<label class="pchk"><input type="checkbox" value="autre" id="injOtherChk"> Autre produit</label>`;
+  $("#injOtherChk").addEventListener("change", () => { $("#injOther").hidden = !$("#injOtherChk").checked; });
+})();
+function injVaccines(){
+  const set = new Set();
+  document.querySelectorAll("#injProducts input:checked").forEach(c => { if (c.value !== "autre") VACCINE_PRODUCTS[+c.value].v.forEach(v => set.add(v)); });
+  if ($("#injOtherChk").checked) document.querySelectorAll("#injOtherVaccines input:checked").forEach(c => set.add(c.value));
+  return [...set];
+}
+function concoursConflict(dateStr){
+  return hd.protocol.concours.find(c => { const d = daysBetween(dateStr, c); return d >= 0 && d < 7; });
+}
+onSubmit("#injForm", async () => {
+  const vaccines = injVaccines();
+  if (!vaccines.length){ toast("Cochez au moins un produit (ou « Autre produit » et le vaccin concerné)"); return; }
+  const date = $("#injDate").value;
+  const clash = concoursConflict(date);
+  if (clash && !(await askConfirm(`Attention : cette injection tombe moins de 7 jours avant le concours du ${fmt(clash)}. Le cheval ne pourra pas concourir. Enregistrer quand même ?`, "Enregistrer"))) return;
+  const products = [...document.querySelectorAll("#injProducts input:checked")].filter(c => c.value !== "autre").map(c => VACCINE_PRODUCTS[+c.value].name);
+  if ($("#injOtherChk").checked && $("#injOtherName").value.trim()) products.push($("#injOtherName").value.trim());
+  const entry = { id: newId(), date, stage: $("#injStage").value, vaccines, products, note: $("#injNote").value.trim() };
+  try {
+    await q(sb.from("injections").insert({ id: entry.id, horse_id: cur.id, date, stage: entry.stage, vaccines, products, note: entry.note || null }));
+    await saveAttachments("#injFiles", entry.id);
+    document.querySelectorAll("#injProducts input, #injOtherVaccines input").forEach(c => c.checked = false);
+    $("#injOther").hidden = true; $("#injOtherName").value = ""; $("#injNote").value = "";
+    toast("Injection enregistrée");
+  } catch(e){}
+  await refresh(); renderProtocol();
+});
+
+/* --- Protocole : vermifuges --- */
+const WORM_PRODUCTS = [
+  { name:"Eqvalan", m:"Ivermectine" }, { name:"Eraquell", m:"Ivermectine" }, { name:"Bimectin", m:"Ivermectine" }, { name:"Hippomectine", m:"Ivermectine" },
+  { name:"Strongid", m:"Pyrantel" }, { name:"Combimintic", m:"Pyrantel" },
+  { name:"Equest Pramox", m:"Moxidectine + Praziquantel" },
+  { name:"Eqvalan Duo", m:"Ivermectine + Praziquantel" }, { name:"Equimax", m:"Ivermectine + Praziquantel" }, { name:"Furexel Combi", m:"Ivermectine + Praziquantel" },
+  { name:"Equest", m:"Moxidectine" }, { name:"Panacur Equine Guard", m:"Fenbendazole (5 jours)" }
+];
+const SEASONS = [
+  { key:"hiver", label:"Hiver", months:"janvier – février", m:[1,2], rule:"Uniquement si fort risque de larves enkystées", mol:"Moxidectine (si non faite à l’automne) ou Fenbendazole 5 jours", prod:"Equest · Panacur Equine Guard", optional:true },
+  { key:"printemps", label:"Printemps", months:"mars – mai", m:[3,4,5], rule:"Si coproscopie supérieure à 200 OPG", mol:"Ivermectine ou Pyrantel", prod:"Eqvalan, Eraquell, Bimectin, Hippomectine · Strongid, Combimintic" },
+  { key:"ete", label:"Été", months:"juin – septembre", m:[6,7,8,9], rule:"Si coproscopie supérieure à 200 OPG", mol:"Pyrantel ou Ivermectine (alterner avec le printemps)", prod:"Strongid · Eqvalan, Eraquell" },
+  { key:"automne", label:"Automne", months:"octobre – décembre", m:[10,11,12], rule:"Systématique, après les premières gelées (ténias et gastérophiles)", mol:"Moxidectine + Praziquantel ou Ivermectine + Praziquantel", prod:"Equest Pramox · Eqvalan Duo, Equimax, Furexel Combi" }
+];
+const seasonOf = s => SEASONS.find(x => x.m.includes(parse(s).getMonth() + 1)).key;
+let wormYear = new Date().getFullYear();
+$("#wormProduct").innerHTML = `<option value="">Choisir…</option>` + WORM_PRODUCTS.map((p, i) => `<option value="${i}">${esc(p.name)} (${esc(p.m)})</option>`).join("") + `<option value="autre">Autre…</option>`;
+$("#wormProduct").addEventListener("change", () => {
+  const v = $("#wormProduct").value;
+  $("#wormOther").hidden = v !== "autre";
+  $("#wormMolecule").value = v && v !== "autre" ? WORM_PRODUCTS[+v].m : "";
+});
+$("#wormSkip").addEventListener("change", () => {
+  const skip = $("#wormSkip").checked;
+  $("#wormProductWrap").hidden = skip;
+  $("#wormProduct").required = !skip;
+});
+$("#wormPrev").onclick = () => { wormYear--; drawWormCalendar(); };
+$("#wormNext").onclick = () => { wormYear++; drawWormCalendar(); };
+function lastMolecule(){
+  const t = [...hd.protocol.vermifuges].filter(w => !w.skip).sort((a, b) => b.date.localeCompare(a.date))[0];
+  return t ? t.molecule : "";
+}
+function wormSuggestion(){
+  const s = seasonOf(todayISO()), last = lastMolecule();
+  if (s === "printemps" || s === "ete"){
+    if (/^Ivermectine$/i.test(last)) return "Dernier vermifuge à l’ivermectine : pensez au pyrantel pour alterner.";
+    if (/^Pyrantel$/i.test(last)) return "Dernier vermifuge au pyrantel : pensez à l’ivermectine pour alterner.";
+  }
+  if (s === "hiver"){
+    const autumn = hd.protocol.vermifuges.find(w => !w.skip && seasonOf(w.date) === "automne" && parse(w.date).getFullYear() === new Date().getFullYear() - 1 && /Moxidectine/i.test(w.molecule));
+    if (autumn) return "Moxidectine déjà donnée à l’automne : le vermifuge d’hiver n’est pas nécessaire.";
+  }
+  return "";
+}
+onSubmit("#wormForm", async () => {
+  const skip = $("#wormSkip").checked, v = $("#wormProduct").value;
+  if (!skip && !v){ toast("Choisissez le vermifuge donné"); return; }
+  const product = skip ? "" : v === "autre" ? $("#wormOtherName").value.trim() || "Autre" : WORM_PRODUCTS[+v].name;
+  const opgRaw = $("#wormOpg").value.trim();
+  const entry = { id: newId(), date: $("#wormDate").value, skip, product, molecule: skip ? "" : $("#wormMolecule").value.trim(),
+    opg: opgRaw === "" ? null : Math.max(0, parseInt(opgRaw, 10) || 0), note: $("#wormNote").value.trim() };
+  try {
+    await q(sb.from("vermifuges").insert({ id: entry.id, horse_id: cur.id, date: entry.date, skip, product: product || null,
+      molecule: entry.molecule || null, opg: entry.opg, note: entry.note || null }));
+    await saveAttachments("#wormFiles", entry.id);
+    $("#wormProduct").value = ""; $("#wormMolecule").value = ""; $("#wormOtherName").value = ""; $("#wormOther").hidden = true;
+    $("#wormOpg").value = ""; $("#wormNote").value = ""; $("#wormSkip").checked = false; $("#wormProductWrap").hidden = false;
+    toast(skip ? "Saison notée « non traitée »" : "Vermifuge enregistré");
+  } catch(e){}
+  await refresh(); renderProtocol();
+});
+function drawWormCalendar(){
+  $("#wormYear").textContent = wormYear;
+  const now = new Date(), curSeason = seasonOf(todayISO()), thisYear = now.getFullYear();
+  const box = $("#wormSeasons"); box.innerHTML = "";
+  SEASONS.forEach((se, idx) => {
+    const entries = hd.protocol.vermifuges.filter(w => parse(w.date).getFullYear() === wormYear && seasonOf(w.date) === se.key)
+      .sort((a, b) => b.date.localeCompare(a.date));
+    const done = entries.find(w => !w.skip), skipped = entries.find(w => w.skip);
+    let st, cls;
+    const past = wormYear < thisYear || (wormYear === thisYear && SEASONS.findIndex(x => x.key === curSeason) > idx);
+    const current = wormYear === thisYear && se.key === curSeason;
+    if (done){ st = `Fait le ${fmt(done.date, {day:"numeric", month:"short"})} · ${esc(done.product)}${done.opg != null ? ` · ${done.opg} OPG` : ""}`; cls = "done"; }
+    else if (skipped){ st = `Non traité${skipped.opg != null ? ` (coproscopie ${skipped.opg} OPG)` : ""}`; cls = "skip"; }
+    else if (current){ st = se.optional ? "Facultatif cette saison" : "À faire cette saison"; cls = se.optional ? "opt" : "todo"; }
+    else if (past){ st = se.optional ? "Non fait (facultatif)" : "Non renseigné"; cls = se.optional ? "opt" : "miss"; }
+    else { st = "À venir"; cls = "next"; }
+    const card = document.createElement("div"); card.className = "season " + cls;
+    card.innerHTML = `<div class="shead"><strong>${se.label}</strong><span>${se.months}</span></div>
+      <div class="sstatus">${st}</div>
+      <div class="sinfo"><b>${esc(se.mol)}</b><br>${esc(se.prod)}<br><em>${esc(se.rule)}</em></div>`;
+    box.append(card);
+  });
+}
+
+/* --- Concours --- */
+onSubmit("#concoursForm", async () => {
+  const d = $("#concoursDate").value;
+  if (!hd.protocol.concours.includes(d)) await q(sb.from("concours").upsert({ horse_id: cur.id, date: d }, { onConflict:"horse_id,date", ignoreDuplicates:true }));
+  await refresh(); renderProtocol();
+});
+
+/* --- Réglages --- */
+const protoChange = fn => async () => { fn(); try { await saveProtocolSettings(); } catch(e){} await refresh(); renderProtocol(); };
+$("#protoReglement").addEventListener("change", protoChange(() => { hd.protocol.reglement = $("#protoReglement").value; }));
+$("#protoTetanos").addEventListener("change", protoChange(() => { hd.protocol.tetanosYears = parseInt($("#protoTetanos").value, 10) || 2; }));
+$("#protoRage").addEventListener("change", protoChange(() => { hd.protocol.rage = $("#protoRage").checked; }));
+
+/* --- Affichage du protocole --- */
+async function renderProtocol(){
+  const p = hd.protocol;
+  $("#protoReglement").value = p.reglement; $("#protoTetanos").value = String(p.tetanosYears || 2); $("#protoRage").checked = !!p.rage;
+  // Échéances
+  const box = $("#vaccDue"); box.innerHTML = "";
+  ["grippe","rhino","tetanos","rage"].forEach(v => {
+    if (v === "rage" && !p.rage) return;
+    const d = vaccineDue(hd, v), req = isRequired(v);
+    const badge = req ? `<span class="pill soon">Obligatoire</span>` : `<span class="pill off">${v === "rage" ? "Facultatif" : "Recommandé"}</span>`;
+    const card = document.createElement("div");
+    if (!d){
+      card.className = "due " + (req ? "late" : "none");
+      card.innerHTML = `<div class="dt"><strong>${VACCINES[v].label}</strong>${badge}</div><div class="ds">Aucune injection enregistrée${req ? " : à mettre à jour" : ""}</div>`;
+    } else {
+      const st = dueStatus(d);
+      card.className = "due " + st.cls;
+      card.innerHTML = `<div class="dt"><strong>${VACCINES[v].label}</strong>${badge}</div>
+        <div class="ds">${esc(d.label)} : <b>${esc(st.text)}</b></div>
+        <div class="dm">Limite : ${fmt(d.due)} · dernière injection le ${fmt(d.last.date)} (${STAGES[d.last.stage]})${d.advice ? ` · ${esc(d.advice)}` : ""}</div>`;
+    }
+    box.append(card);
+  });
+  // Concours
+  const t = todayISO(), cl = $("#concoursList"); cl.innerHTML = "";
+  const upcoming = p.concours.filter(c => c >= t);
+  upcoming.forEach(c => {
+    const injClash = p.injections.find(i => { const dd = daysBetween(i.date, c); return dd >= 0 && dd < 7; });
+    const it = document.createElement("div"); it.className = "item";
+    it.innerHTML = `<div class="grow"><div class="title">${cap(fmt(c, {weekday:"long", day:"numeric", month:"long", year:"numeric"}))}</div>
+      <div class="meta">${injClash ? `<span style="color:var(--alert);font-weight:600">⚠ Injection le ${fmt(injClash.date, {day:"numeric", month:"short"})}, moins de 7 jours avant</span>` : `Aucune injection possible après le ${fmt(addDaysIso(c, -7), {day:"numeric", month:"long"})}`}</div></div>`;
+    if (level === 2){
+      const del = document.createElement("button"); del.className = "danger"; del.textContent = "Retirer";
+      del.onclick = async () => { try { await q(sb.from("concours").delete().eq("id", p.concoursIds[c])); } catch(e){} await refresh(); renderProtocol(); };
+      it.append(del);
+    }
+    cl.append(it);
+  });
+  if (!upcoming.length) cl.innerHTML = `<p class="muted" style="margin:0 4px;font-size:.9rem">Aucun concours prévu.</p>`;
+  // Historique des injections
+  const files = await attachmentsByRef();
+  const il = $("#injList"); il.innerHTML = "";
+  const inj = [...p.injections].sort((a, b) => b.date.localeCompare(a.date));
+  if (!inj.length) il.innerHTML = `<div class="empty">Aucune injection enregistrée. Commencez par saisir les vaccins déjà faits, en indiquant l’étape (primo ou rappel).</div>`;
+  inj.forEach(i => il.append(historyItem(`${fmt(i.date)} · ${STAGES[i.stage]}${i.date > todayISO() ? " · prévue" : ""}`,
+    esc(i.vaccines.map(v => VACCINES[v].label).join(" + ")) + (i.products.length ? " · " + esc(i.products.join(", ")) : "") + (i.note ? " · " + esc(i.note) : ""),
+    files[i.id], async () => {
+      if (!(await askConfirm("Supprimer cette injection et ses fichiers pour tous les membres ?"))) return;
+      await deleteAttachments(i.id); await q(sb.from("injections").delete().eq("id", i.id));
+      await refresh(); renderProtocol();
+    }, i.by)));
+  // Vermifuges
+  drawWormCalendar();
+  $("#wormHint").textContent = wormSuggestion();
+  $("#wormHint").hidden = !$("#wormHint").textContent;
+  const wl = $("#wormList"); wl.innerHTML = "";
+  const worms = [...p.vermifuges].sort((a, b) => b.date.localeCompare(a.date));
+  if (!worms.length) wl.innerHTML = `<div class="empty">Aucun vermifuge enregistré.</div>`;
+  worms.forEach(w => {
+    const se = SEASONS.find(x => x.key === seasonOf(w.date)).label;
+    wl.append(historyItem(`${fmt(w.date)} · ${w.skip ? "Non traité" : esc(w.product)}`,
+      [se, w.molecule && esc(w.molecule), w.opg != null && `${w.opg} OPG`, w.note && esc(w.note)].filter(Boolean).join(" · "),
+      files[w.id], async () => {
+        if (!(await askConfirm("Supprimer ce vermifuge et ses fichiers pour tous les membres ?"))) return;
+        await deleteAttachments(w.id); await q(sb.from("vermifuges").delete().eq("id", w.id));
+        await refresh(); renderProtocol();
+      }, w.by));
+  });
+}
+
 
 /* ---------- Photos ---------- */
 onSubmit("#photoForm", async () => {
@@ -2003,7 +2718,7 @@ function showInstallTip(){
 /* ---------- Démarrage ---------- */
 (async function init(){
   const t = todayISO();
-  ["#docDate","#careStart","#careEnd","#shoeDate","#photoDate"].forEach(id => { $(id).value = t; });
+  ["#docDate","#careStart","#careEnd","#shoeDate","#photoDate","#osteoDate","#dentisteDate","#injDate","#wormDate"].forEach(id => { $(id).value = t; });
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY){ showScreen("configError"); return; }
   if (!window.supabase){
     $("#configMsg").textContent = "Impossible de charger l’application : vérifiez votre connexion internet puis rouvrez-la.";
